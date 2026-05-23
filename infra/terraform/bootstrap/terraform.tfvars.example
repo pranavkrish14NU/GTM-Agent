@@ -1,0 +1,5 @@
+# Copy to terraform.tfvars and fill in before running `terraform apply` here.
+project_id            = "boba-shared-xxxxxx"
+region                = "us-central1"
+state_bucket_name     = "boba-tfstate-xxxxxx" # must be globally unique
+state_bucket_location = "US"
