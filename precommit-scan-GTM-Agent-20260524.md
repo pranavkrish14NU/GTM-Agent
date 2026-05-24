@@ -1,30 +1,38 @@
 # Pre-Commit Security Scan — GTM-Agent
-**Date:** 5/24/2026 | **Branch:** wo/WO-017 | **Verdict:** SAFE TO COMMIT
+**Date:** 2026-05-24  
+**Verdict:** ✅ SAFE TO COMMIT — 0 new findings from WO-026 changes
 
 ## Summary
 
-| Severity | New (WO-017) | Existing | Total |
-|----------|-------------|----------|-------|
-| Critical | 0 | 8 | 8 |
-| High | 0 | 52 | 52 |
-| Medium | 0 | 100 | 100 |
-| Low | 0 | 3 | 3 |
-| **Total** | **0** | **163** | **163** |
+| Severity | Count |
+|----------|-------|
+| Critical | 1 |
+| High | 59 |
+| Medium | 0 |
+| Low | 0 |
+| Total | 60 |
+| New (WO-026 changes) | 0 |
+| Existing (pre-committed) | 60 |
 
-Risk Score: 88.2/100 (Critical Risk) — all pre-existing, 0 new from WO-017
+Risk Score: 81.8/100 — all pre-existing findings in Go backend infra layer.
 
 ## Findings by Category
 
-### Secrets (Gitleaks) - CLEAN
-### SAST (Semgrep) - CLEAN
-### Container (Hadolint) - No Dockerfiles
+### Grype — Dependency Vulnerabilities (60 findings, all pre-existing)
+All in Go backend packages. WO-026 adds only frontend TypeScript/CSS files.
 
-### Dependencies (Grype) — 8C / 52H — all pre-existing
-- stdlib@go1.20.12 CVE-2025-22871 Critical — HTTP request smuggling
-- stdlib@go1.20.12 CVE-2026-27143 Critical — Integer overflow
-- stdlib@go1.20.12 CVE-2024-24790 Critical — IPv6 misclassification
-- google.golang.org/grpc@v1.74.2 GHSA-p77j-4mvh-x3m3 Critical — gRPC auth bypass
-- stdlib@go1.20.12 CVE-2023-45288 High — HTTP/2 DoS
-- + 47 more High from Go stdlib
+- Critical x1: google.golang.org/grpc
+- High x54: stdlib (Go)
+- High x2: go.opentelemetry.io/otel/sdk
+- High x1: go.opentelemetry.io/otel
+- High x1: github.com/sirupsen/logrus
+- High x1: github.com/go-jose/go-jose/v4
 
-### IaC (Checkov) — 44 medium — all pre-existing infra files
+### Semgrep — 1 WARNING (not counted)
+WARNING in auto-generated security-report HTML — not a source file.
+
+### Checkov — 43 failed IaC checks (pre-existing Terraform/GH Actions config)
+
+### Gitleaks: 0 secrets found
+### npm audit: 0 Critical/High
+### Hadolint: 0 Dockerfile findings
