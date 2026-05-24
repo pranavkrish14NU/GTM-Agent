@@ -96,6 +96,69 @@ export interface Insight {
 }
 
 // ---------------------------------------------------------------------------
+// Component Library — MetricStory
+// ---------------------------------------------------------------------------
+
+export interface MetricStory {
+  id: string;
+  /** The primary metric or KPI headline */
+  metric: string;
+  /** What the metric means in business context */
+  meaning: string;
+  /** Supporting data points / evidence sentences */
+  evidence: string[];
+  /** Strategic recommendation derived from the metric */
+  recommendation: string;
+  /** Concrete next action for the user to take */
+  nextAction: string;
+  /** e.g. "Q2 2026", "Last 30 days" */
+  period?: string;
+  workspaceId: string;
+  createdAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Component Library — DataStory
+// ---------------------------------------------------------------------------
+
+export interface DataPoint {
+  label: string;
+  value: number;
+}
+
+export type ChartType = 'bar' | 'line' | 'number';
+
+export interface DataStory {
+  id: string;
+  title: string;
+  /** Narrative context for the visualised data */
+  narrative: string;
+  chartType?: ChartType;
+  dataPoints?: DataPoint[];
+  workspaceId: string;
+  createdAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Component Library — SyncHealth
+// ---------------------------------------------------------------------------
+
+export interface FreshnessDistribution {
+  /** Files with freshnessScore ≥ 80 */
+  fresh: number;
+  /** Files with freshnessScore 40–79 */
+  stale: number;
+  /** Files with freshnessScore < 40 */
+  outdated: number;
+}
+
+export interface SyncHealthData {
+  connection: DriveConnection;
+  freshnessDistribution: FreshnessDistribution;
+  totalFiles: number;
+}
+
+// ---------------------------------------------------------------------------
 // Search
 // ---------------------------------------------------------------------------
 
