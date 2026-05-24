@@ -49,7 +49,7 @@ jobs:
 
       - name: Build shared packages
         if: steps.ws.outputs.present == 'true'
-        run: npm run build --workspace packages/database --workspace packages/drive-connector --workspace packages/llm-gateway
+        run: npm run build --workspace packages/database --workspace packages/drive-connector --workspace packages/llm-gateway --workspace packages/logger
 
       - name: Lint (ESLint)
         if: steps.ws.outputs.present == 'true'
