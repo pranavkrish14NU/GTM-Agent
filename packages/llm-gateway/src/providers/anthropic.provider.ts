@@ -85,7 +85,7 @@ export class AnthropicProvider implements LLMProvider {
 
     const data = await this.post<AnthropicMessagesResponse>('/messages', body);
     const content = data.content[0];
-    if (!content || content.type !== 'text') {
+    if (!content || content.type !== 'text' || typeof content.text !== 'string') {
       throw new LLMProviderError('Anthropic returned no text content', this.name, 200, false);
     }
 
@@ -155,6 +155,6 @@ export class AnthropicProvider implements LLMProvider {
 interface AnthropicMessagesResponse {
   id: string;
   model: string;
-  content: Array<{ type: 'text'; text: string } | { type: string }>;
+  content: Array<{ type: string; text?: string }>;
   usage?: { input_tokens: number; output_tokens: number };
 }
