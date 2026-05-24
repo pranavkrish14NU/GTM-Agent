@@ -1,0 +1,48 @@
+# Default values for the api-service chart. Per-environment overrides live in
+# values-<env>.yaml.
+replicaCount: 2
+
+image:
+  repository: REGISTRY/api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+containerPort: 8080
+
+serviceAccount:
+  # Kubernetes service account name (bound to a GCP SA via Workload Identity).
+  name: boba-api
+  # GCP service account email for the iam.gke.io/gcp-service-account annotation.
+  gcpServiceAccount: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+# AC: API request 256m/512Mi, limit 1000m/1Gi.
+resources:
+  requests:
+    cpu: 256m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# AC: API HPA min 2, max 20, target CPU 70%.
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+
+# AC: at least one pod always available during disruptions.
+pdb:
+  minAvailable: 1
+
+probes:
+  liveness: /healthz
+  readiness: /readyz
+
+# Rendered into a ConfigMap consumed via envFrom.
+config:
+  NODE_ENV: production
