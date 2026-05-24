@@ -21,3 +21,7 @@ gke_deletion_protection     = false
 gke_master_authorized_networks = [
   { cidr_block = "10.10.0.0/20", display_name = "dev-app-subnet" },
 ]
+
+# Cloud SQL (WO-003)
+cloud_sql_tier                = "db-custom-1-3840"
+cloud_sql_deletion_protection = false

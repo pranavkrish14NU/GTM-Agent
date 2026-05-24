@@ -72,3 +72,27 @@ module "gke" {
 
   depends_on = [module.project_services, module.networking, module.iam]
 }
+
+module "cloud_sql" {
+  source = "./modules/cloud-sql"
+
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+
+  # Private IP over WO-001's VPC + Private Service Access peering.
+  network = module.networking.network_self_link
+
+  tier                = var.cloud_sql_tier
+  replica_tier        = var.cloud_sql_tier
+  deletion_protection = var.cloud_sql_deletion_protection
+
+  # Grant the runtime service accounts read access to the DB credentials secret.
+  secret_accessor_members = [
+    "serviceAccount:${module.iam.api_gateway_sa_email}",
+    "serviceAccount:${module.iam.worker_pods_sa_email}",
+  ]
+
+  # Cloud SQL private IP requires the service networking connection from WO-001.
+  depends_on = [module.project_services, module.networking, module.iam]
+}

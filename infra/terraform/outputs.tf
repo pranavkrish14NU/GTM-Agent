@@ -52,3 +52,18 @@ output "gke_node_pools" {
   description = "GKE node pool names."
   value       = module.gke.node_pool_names
 }
+
+output "cloud_sql_connection_name" {
+  description = "Cloud SQL primary connection name."
+  value       = module.cloud_sql.connection_name
+}
+
+output "cloud_sql_replica_connection_name" {
+  description = "Cloud SQL read replica connection name."
+  value       = module.cloud_sql.replica_connection_name
+}
+
+output "cloud_sql_credentials_secret" {
+  description = "Secret Manager secret ID holding DB credentials."
+  value       = module.cloud_sql.credentials_secret_id
+}

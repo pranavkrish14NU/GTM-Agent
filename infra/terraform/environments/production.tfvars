@@ -22,3 +22,7 @@ gke_deletion_protection     = true
 gke_master_authorized_networks = [
   { cidr_block = "10.210.0.0/20", display_name = "production-app-subnet" },
 ]
+
+# Cloud SQL (WO-003)
+cloud_sql_tier                = "db-custom-4-15360"
+cloud_sql_deletion_protection = true

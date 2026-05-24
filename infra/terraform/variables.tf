@@ -77,3 +77,16 @@ variable "gke_deletion_protection" {
   type        = bool
   default     = true
 }
+
+# --- Cloud SQL (WO-003) ---
+variable "cloud_sql_tier" {
+  description = "Machine tier for the Cloud SQL primary and read replica."
+  type        = string
+  default     = "db-custom-2-7680"
+}
+
+variable "cloud_sql_deletion_protection" {
+  description = "Prevent accidental Cloud SQL deletion (keep true in production)."
+  type        = bool
+  default     = true
+}
