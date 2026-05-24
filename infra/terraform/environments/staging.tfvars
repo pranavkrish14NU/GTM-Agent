@@ -12,3 +12,12 @@ pods_secondary_cidr     = "10.132.0.0/14"
 services_secondary_cidr = "10.136.0.0/20"
 
 enable_iap_ssh = true
+
+# GKE (WO-002)
+gke_master_ipv4_cidr        = "172.16.1.0/28"
+gke_enable_private_endpoint = true
+gke_deletion_protection     = false
+# Replace with your CI/CD runner ranges (must be reachable to the private control plane).
+gke_master_authorized_networks = [
+  { cidr_block = "10.110.0.0/20", display_name = "staging-app-subnet" },
+]

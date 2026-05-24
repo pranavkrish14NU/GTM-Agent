@@ -37,3 +37,18 @@ output "enabled_apis" {
   description = "APIs enabled on the project."
   value       = module.project_services.enabled_apis
 }
+
+output "gke_cluster_name" {
+  description = "GKE cluster name."
+  value       = module.gke.cluster_name
+}
+
+output "gke_workload_identity_pool" {
+  description = "GKE Workload Identity pool."
+  value       = module.gke.workload_identity_pool
+}
+
+output "gke_node_pools" {
+  description = "GKE node pool names."
+  value       = module.gke.node_pool_names
+}

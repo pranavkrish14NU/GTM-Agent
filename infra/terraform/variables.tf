@@ -50,3 +50,30 @@ variable "enable_iap_ssh" {
   type        = bool
   default     = true
 }
+
+# --- GKE (WO-002) ---
+variable "gke_master_ipv4_cidr" {
+  description = "RFC1918 /28 for the private GKE control plane. Must not overlap subnets or secondary ranges."
+  type        = string
+}
+
+variable "gke_enable_private_endpoint" {
+  description = "When true the GKE control plane has no public endpoint."
+  type        = bool
+  default     = true
+}
+
+variable "gke_master_authorized_networks" {
+  description = "CIDR blocks allowed to reach the GKE control plane — CI/CD runner ranges only."
+  type = list(object({
+    cidr_block   = string
+    display_name = string
+  }))
+  default = []
+}
+
+variable "gke_deletion_protection" {
+  description = "Prevent accidental GKE cluster deletion (keep true in production)."
+  type        = bool
+  default     = true
+}
