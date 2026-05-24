@@ -56,6 +56,24 @@ export const config = {
     cookieName: optional('REFRESH_TOKEN_COOKIE_NAME', 'boba_rt'),
   },
 
+  /**
+   * AES-256-GCM encryption key for Drive OAuth tokens at rest.
+   * Must be a 64-character hex string (32 bytes).
+   * In production, inject from Secret Manager.
+   */
+  encryptionKeyHex: optional(
+    'ENCRYPTION_KEY_HEX',
+    // Development-only fallback — 32 zero bytes expressed as hex.
+    // NEVER use this in production.
+    '0000000000000000000000000000000000000000000000000000000000000000',
+  ),
+
+  /** Google Cloud Tasks queue name for Drive sync jobs. */
+  cloudTasks: {
+    queueName: optional('CLOUD_TASKS_QUEUE', 'drive-sync'),
+    serviceUrl: optional('CLOUD_TASKS_SERVICE_URL', 'http://localhost:8081'),
+  },
+
   /** Whether the service is running in test mode (disables certain validations) */
   isTest: optional('NODE_ENV', '') === 'test',
 } as const;

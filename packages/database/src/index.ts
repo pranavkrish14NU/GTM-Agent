@@ -41,6 +41,22 @@ export interface User {
   updated_at: Date;
 }
 
+/** One entry in the folder-to-module mapping stored in drive_connections. */
+export interface FolderMapping {
+  /** Google Drive folder ID. */
+  folder_id: string;
+  /** Display name of the folder (cached for UI — not authoritative). */
+  folder_name: string;
+  /**
+   * BOBA module this folder maps to.
+   * Matches the insight type values (brand, competitor, persona, campaign, …).
+   */
+  module: string;
+}
+
+export type SyncStatus = 'never' | 'idle' | 'syncing' | 'error';
+export type SyncHealth = 'healthy' | 'degraded' | 'error';
+
 export interface DriveConnection {
   id: string;
   workspace_id: string;
@@ -49,6 +65,16 @@ export interface DriveConnection {
   refresh_token_enc: string;
   scopes: string[];
   expires_at: Date | null;
+  /** Folder-to-module mappings configured by an admin. */
+  folder_mappings: FolderMapping[];
+  /** Current sync lifecycle state (added in migration 004). */
+  sync_status: SyncStatus;
+  /** Count of files indexed in the most recent sync. */
+  files_indexed: number;
+  /** Timestamp of the last successful sync, or null if never synced. */
+  last_sync_at: Date | null;
+  /** Aggregate health after the last sync, or null if never synced. */
+  sync_health: SyncHealth | null;
   created_at: Date;
   updated_at: Date;
 }
