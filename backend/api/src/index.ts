@@ -8,15 +8,18 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import pg from 'pg';
+import { LLMGatewayService, MockLLMProvider, InMemoryTokenBudgetStore } from '@boba/llm-gateway';
 import { createAuthRouter } from './routes/auth.js';
 import { createWorkspaceRouter } from './routes/workspaces.js';
 import { createDriveConnectionsRouter } from './routes/drive-connections.js';
 import { createDocumentsRouter } from './routes/documents.js';
 import { createCitationsRouter } from './routes/citations.js';
+import { createAskRouter } from './routes/ask.js';
 import { AuthService } from './services/auth.service.js';
 import { DriveConnectionService } from './services/drive-connection.service.js';
 import { DocumentService } from './services/document.service.js';
 import { CitationService } from './services/citation.service.js';
+import { AskService } from './services/ask.service.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
@@ -56,6 +59,15 @@ export function createApp(pool: pg.Pool) {
   // Citation routes (nested under /v1/insights/:id — see createCitationsRouter).
   const citationService = new CitationService(pool);
   app.use('/v1/insights/:id/citations', createCitationsRouter(authService, citationService));
+
+  // Ask BOBA routes — RAG query engine (requires JWT + viewer role).
+  // Uses MockLLMProvider in dev/test; real providers are wired via env vars in production.
+  const llmGateway = new LLMGatewayService(
+    { providers: [new MockLLMProvider()] },
+    new InMemoryTokenBudgetStore(),
+  );
+  const askService = new AskService(pool, llmGateway);
+  app.use('/v1/ask', createAskRouter(authService, askService));
 
   // 404 handler.
   app.use((_req, res) => {
