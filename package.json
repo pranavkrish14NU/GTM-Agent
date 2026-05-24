@@ -1,15 +1,27 @@
 {
-  "name": "boba",
-  "version": "0.0.0",
-  "private": true,
-  "description": "BOBA â€” AI-powered GTM command center (monorepo root)",
-  "license": "MIT",
-  "engines": {
-    "node": ">=20"
+  “name”: “boba”,
+  “version”: “0.0.0”,
+  “private”: true,
+  “description”: “BOBA — AI-powered GTM command center (monorepo root)”,
+  “license”: “MIT”,
+  “engines”: {
+    “node”: “>=20”
   },
-  "workspaces": [
-    "frontend",
-    "backend/*",
-    "packages/*"
-  ]
+  “workspaces”: [
+    “frontend”,
+    “backend/*”,
+    “packages/*”
+  ],
+  “scripts”: {
+    “setup:keys”:   “node scripts/generate-jwt-keys.mjs”,
+    “db:up”:        “docker compose up -d postgres redis”,
+    “db:down”:      “docker compose down”,
+    “db:reset”:     “docker compose down -v && docker compose up -d postgres redis”,
+    “migrate:up”:   “npm run migrate:up --workspace=packages/database”,
+    “migrate:down”: “npm run migrate:down --workspace=packages/database”,
+    “seed”:         “npm run seed:dev --workspace=packages/database”,
+    “dev:api”:      “npm run dev --workspace=backend/api”,
+    “test”:         “npm run test --workspace=backend/api”,
+    “build”:        “npm run build --workspaces --if-present”
+  }
 }
