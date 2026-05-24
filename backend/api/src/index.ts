@@ -11,8 +11,10 @@ import pg from 'pg';
 import { createAuthRouter } from './routes/auth.js';
 import { createWorkspaceRouter } from './routes/workspaces.js';
 import { createDriveConnectionsRouter } from './routes/drive-connections.js';
+import { createDocumentsRouter } from './routes/documents.js';
 import { AuthService } from './services/auth.service.js';
 import { DriveConnectionService } from './services/drive-connection.service.js';
+import { DocumentService } from './services/document.service.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
@@ -44,6 +46,10 @@ export function createApp(pool: pg.Pool) {
   // Drive connection routes (requires JWT + admin role — see createDriveConnectionsRouter).
   const driveConnectionService = new DriveConnectionService(pool, new CloudTasksQueue());
   app.use('/v1/connections/drive', createDriveConnectionsRouter(authService, driveConnectionService));
+
+  // Document routes (requires JWT + viewer role — see createDocumentsRouter).
+  const documentService = new DocumentService(pool);
+  app.use('/v1/documents', createDocumentsRouter(authService, documentService));
 
   // 404 handler.
   app.use((_req, res) => {
