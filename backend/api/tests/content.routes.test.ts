@@ -279,10 +279,11 @@ describe('POST /v1/content/generate', () => {
 
   it('returns 400 when required fields missing', async () => {
     const auth = makeAuthService('member');
+    // Omit `topic` (the required field) — should be rejected by body validator.
     const res = await request(buildApp(auth, contentService))
       .post('/v1/content/generate')
       .set('Authorization', 'Bearer token')
-      .send({ topic: 'Missing other fields' });
+      .send({ type: 'blog_post', tone: 'professional' });
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
   });

@@ -18,6 +18,8 @@ import type { AuthService } from '../services/auth.service.js';
 import type { AskService } from '../services/ask.service.js';
 import { createJwtMiddleware } from '../middleware/jwt.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
+import { llmRateLimit } from '../middleware/rate-limit.middleware.js';
+import { createBodyValidator, ASK_BODY_SCHEMA } from '../middleware/validate-body.middleware.js';
 
 export function createAskRouter(
   authService: AuthService,
@@ -47,16 +49,14 @@ export function createAskRouter(
     '/',
     jwtGuard,
     requireRole('viewer'),
+    llmRateLimit(),
+    createBodyValidator(ASK_BODY_SCHEMA),
     async (req: Request, res: Response): Promise<void> => {
+      // query is guaranteed non-empty by createBodyValidator(ASK_BODY_SCHEMA).
       const { query, conversation_id } = req.body as {
-        query?: string;
+        query: string;
         conversation_id?: string;
       };
-
-      if (!query || typeof query !== 'string' || !query.trim()) {
-        res.status(400).json({ error: 'query is required and must be a non-empty string' });
-        return;
-      }
 
       try {
         const result = await askService.ask(
