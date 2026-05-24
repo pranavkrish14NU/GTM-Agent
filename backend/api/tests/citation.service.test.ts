@@ -277,10 +277,10 @@ describe('CitationService.getCitations', () => {
 
     await service.getCitations('ws-custom', 'insight-002');
 
-    // Each client's SET LOCAL query should include the workspace ID
+    // Each client's workspace-context query (set_config) should include the workspace ID
     const client1Calls = (client1.query as ReturnType<typeof vi.fn>).mock.calls;
     const setLocalCall1 = client1Calls.find(
-      (c: unknown[]) => typeof c[0] === 'string' && (c[0] as string).includes('SET LOCAL'),
+      (c: unknown[]) => typeof c[0] === 'string' && (c[0] as string).includes('set_config'),
     );
     expect(setLocalCall1).toBeDefined();
     expect(setLocalCall1![1]).toContain('ws-custom');

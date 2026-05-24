@@ -35,30 +35,38 @@ vi.mock('../src/config.js', () => ({
     encryptionKeyHex: 'a'.repeat(64),
     databaseUrl: '',
     port: 8081,
+    // 'google' exercises the token-decrypt + connector path these tests assert.
+    driveConnector: 'google',
     isTest: true,
   },
 }));
 
 // ---------------------------------------------------------------------------
-// Mock GoogleDriveConnector — avoid real OAuth and Drive API.
+// Mock the connector factory — avoid real OAuth and Drive API.
 // ---------------------------------------------------------------------------
+
+const makeMockConnector = (getFileContent: ReturnType<typeof vi.fn>) => ({
+  getFileContent,
+  listFiles: vi.fn(async () => ({ files: [] })),
+  getFile: vi.fn(async () => ({})),
+  searchFiles: vi.fn(async () => []),
+  getFilePermissions: vi.fn(async () => []),
+  getSyncStatus: vi.fn(async () => ({})),
+});
 
 vi.mock('@boba/drive-connector', () => {
   return {
-    GoogleDriveConnector: vi.fn().mockImplementation(() => ({
-      getFileContent: vi.fn(async () => ({
-        id: 'drive-file-001',
-        name: 'Test.gdoc',
-        mimeType: 'application/vnd.google-apps.document',
-        content: SAMPLE_GDOC_TEXT,
-        wordCount: SAMPLE_GDOC_TEXT.split(/\s+/).length,
-      })),
-      listFiles: vi.fn(async () => ({ files: [] })),
-      getFile: vi.fn(async () => ({})),
-      searchFiles: vi.fn(async () => []),
-      getFilePermissions: vi.fn(async () => []),
-      getSyncStatus: vi.fn(async () => ({})),
-    })),
+    createDriveConnector: vi.fn(() =>
+      makeMockConnector(
+        vi.fn(async () => ({
+          id: 'drive-file-001',
+          name: 'Test.gdoc',
+          mimeType: 'application/vnd.google-apps.document',
+          content: SAMPLE_GDOC_TEXT,
+          wordCount: SAMPLE_GDOC_TEXT.split(/\s+/).length,
+        })),
+      ),
+    ),
   };
 });
 
@@ -244,17 +252,14 @@ describe('FileProcessingService.processFile — ExtractionError handling', () =>
   it('returns permanent_failure for permanent ExtractionError without rethrowing', async () => {
     // Import ExtractionError synchronously then throw it from connector mock.
     const { ExtractionError } = await import('../src/extractors/text-extractor.js');
-    const { GoogleDriveConnector } = await import('@boba/drive-connector');
-    vi.mocked(GoogleDriveConnector).mockImplementationOnce(() => ({
-      getFileContent: vi.fn(async () => {
-        throw new ExtractionError('Unsupported MIME type', true);
-      }),
-      listFiles: vi.fn(),
-      getFile: vi.fn(),
-      searchFiles: vi.fn(),
-      getFilePermissions: vi.fn(),
-      getSyncStatus: vi.fn(),
-    }));
+    const { createDriveConnector } = await import('@boba/drive-connector');
+    vi.mocked(createDriveConnector).mockReturnValueOnce(
+      makeMockConnector(
+        vi.fn(async () => {
+          throw new ExtractionError('Unsupported MIME type', true);
+        }),
+      ) as unknown as ReturnType<typeof createDriveConnector>,
+    );
 
     const pool = makePool([
       { rows: [{ id: 'doc-001', content_hash: null }] },
@@ -270,17 +275,14 @@ describe('FileProcessingService.processFile — ExtractionError handling', () =>
   });
 
   it('rethrows transient errors so the caller returns HTTP 500', async () => {
-    const { GoogleDriveConnector } = await import('@boba/drive-connector');
-    vi.mocked(GoogleDriveConnector).mockImplementationOnce(() => ({
-      getFileContent: vi.fn(async () => {
-        throw new Error('Network timeout');
-      }),
-      listFiles: vi.fn(),
-      getFile: vi.fn(),
-      searchFiles: vi.fn(),
-      getFilePermissions: vi.fn(),
-      getSyncStatus: vi.fn(),
-    }));
+    const { createDriveConnector } = await import('@boba/drive-connector');
+    vi.mocked(createDriveConnector).mockReturnValueOnce(
+      makeMockConnector(
+        vi.fn(async () => {
+          throw new Error('Network timeout');
+        }),
+      ) as unknown as ReturnType<typeof createDriveConnector>,
+    );
 
     const pool = makePool([
       { rows: [{ id: 'doc-001', content_hash: null }] },

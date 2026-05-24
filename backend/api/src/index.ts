@@ -12,6 +12,8 @@ import { LLMGatewayService, MockLLMProvider, InMemoryTokenBudgetStore } from '@b
 import { securityHeaders } from './middleware/security-headers.middleware.js';
 import { csrfProtection } from './middleware/csrf.middleware.js';
 import { standardRateLimit } from './middleware/rate-limit.middleware.js';
+import { createJwtMiddleware } from './middleware/jwt.middleware.js';
+import { requireRole } from './middleware/rbac.middleware.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createWorkspaceRouter } from './routes/workspaces.js';
 import { createDriveConnectionsRouter } from './routes/drive-connections.js';
@@ -49,8 +51,12 @@ import { InMemoryCacheService } from './services/cache.service.js';
 import { createDocsRouter } from './middleware/docs.middleware.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
+import { createLogger, requestIdMiddleware, getRequestId } from '@boba/logger';
 
 const { Pool } = pg;
+
+// Shared structured logger for the API service.
+const log = createLogger({ service: 'boba-api' });
 
 // ---------------------------------------------------------------------------
 // App factory (exported for testing)
@@ -63,15 +69,39 @@ export function createApp(pool: pg.Pool) {
   // Wire in a Redis implementation for multi-replica production environments.
   const cache = new InMemoryCacheService();
 
-  // Security headers on every response — must be first middleware.
+  // Correlation ID first so every response + log line carries x-request-id.
+  app.use(requestIdMiddleware);
+
+  // Security headers on every response.
   app.use(securityHeaders());
 
-  // CSRF protection — double-submit cookie for cookie-reliant endpoints.
-  app.use(csrfProtection());
-
+  // Body + cookie parsing must run BEFORE csrfProtection, which reads
+  // req.cookies for the double-submit token (otherwise req.cookies is
+  // undefined and every request throws).
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
   app.use(cookieParser());
+
+  // Structured per-request logging (method, path, status, latency, request_id).
+  app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+      log.info(
+        {
+          request_id: getRequestId(req),
+          method: req.method,
+          path: req.path,
+          status: res.statusCode,
+          duration_ms: Date.now() - start,
+        },
+        'request',
+      );
+    });
+    next();
+  });
+
+  // CSRF protection — double-submit cookie for cookie-reliant endpoints.
+  app.use(csrfProtection());
 
   // Per-user rate limiting — 100 req/min on all /v1/* routes.
   // LLM-powered routes apply an additional 10 req/min limit (see routes).
@@ -163,6 +193,23 @@ export function createApp(pool: pg.Pool) {
   const adminService = new AdminService(pool);
   app.use('/v1/admin', createAdminRouter(authService, adminService));
 
+  // Cache metrics — exposes hit/miss counters + hit rate for the in-process
+  // cache so cache effectiveness is observable (WO-055). Admin-only.
+  const jwtGuard = createJwtMiddleware(authService);
+  app.get('/v1/admin/metrics/cache', jwtGuard, requireRole('admin'), (_req, res) => {
+    const hits = cache.hits;
+    const misses = cache.misses;
+    const total = hits + misses;
+    res.json({
+      cache: {
+        hits,
+        misses,
+        total,
+        hit_rate: total > 0 ? Math.round((hits / total) * 1000) / 1000 : 0,
+      },
+    });
+  });
+
   // 404 handler.
   app.use((_req, res) => {
     res.status(404).json({ error: 'Not found' });
@@ -181,6 +228,6 @@ if (process.env['NODE_ENV'] !== 'test') {
   const app = createApp(pool);
 
   app.listen(config.port, () => {
-    console.log(`BOBA API listening on port ${config.port}`);
+    log.info({ port: config.port }, 'BOBA API listening');
   });
 }

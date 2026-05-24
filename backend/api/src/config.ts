@@ -17,6 +17,16 @@ function optional(name: string, fallback: string): string {
   return process.env[name] ?? fallback;
 }
 
+/**
+ * Reads a PEM-encoded key from the environment, converting literal "\n"
+ * sequences back into real newlines. PEMs are stored single-line in .env
+ * files (and some secret stores), but jose's importPKCS8/importSPKI require
+ * actual newlines. Idempotent: a no-op when the value already has newlines.
+ */
+function optionalPem(name: string): string {
+  return (process.env[name] ?? '').replace(/\\n/g, '\n');
+}
+
 export const config = {
   /** Node.js environment (development | production | test) */
   nodeEnv: optional('NODE_ENV', 'development'),
@@ -37,9 +47,9 @@ export const config = {
   /** JWT RS256 keys — PEM strings injected from Secret Manager at runtime */
   jwt: {
     /** PEM-encoded RSA private key for signing JWTs */
-    privateKeyPem: optional('JWT_PRIVATE_KEY_PEM', ''),
+    privateKeyPem: optionalPem('JWT_PRIVATE_KEY_PEM'),
     /** PEM-encoded RSA public key for verifying JWTs */
-    publicKeyPem: optional('JWT_PUBLIC_KEY_PEM', ''),
+    publicKeyPem: optionalPem('JWT_PUBLIC_KEY_PEM'),
     /** JWT access token TTL in seconds (default: 15 minutes) */
     accessTokenTtlSeconds: parseInt(optional('JWT_ACCESS_TOKEN_TTL_SECONDS', '900'), 10),
     /** JWT issuer claim */

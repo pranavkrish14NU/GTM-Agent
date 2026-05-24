@@ -268,7 +268,8 @@ export class GoogleDriveConnector implements DriveConnector {
    * Fetches the text content of a file, routing by MIME type:
    *   - Google-native → export as text
    *   - text/* / JSON → download via alt=media
-   *   - other         → binary placeholder
+   *   - PDF           → download raw bytes (latin-1) for the PDF extractor
+   *   - other binary  → placeholder
    */
   private async fetchContent(raw: RawDriveFile): Promise<string> {
     const exportMimeType = GOOGLE_EXPORT_MAP[raw.mimeType];
@@ -283,8 +284,14 @@ export class GoogleDriveConnector implements DriveConnector {
       return this.client.downloadFile(raw.id);
     }
 
-    // Binary content (PDFs, Office files, etc.) — return placeholder so the
-    // pipeline can detect and skip chunking if needed.
+    // PDFs: download raw bytes so the ingestion worker's PDF extractor can
+    // parse them (it does Buffer.from(content, 'binary') + pdf-parse).
+    if (raw.mimeType === 'application/pdf') {
+      return this.client.downloadFileBinary(raw.id);
+    }
+
+    // Other binary content (Office files, images, etc.) — return placeholder so
+    // the pipeline can detect and skip chunking if needed.
     return `[BINARY CONTENT: ${raw.mimeType}]`;
   }
 }

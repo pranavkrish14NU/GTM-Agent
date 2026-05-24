@@ -24,7 +24,7 @@ import {
 } from 'react';
 import type { User } from '../types/index.js';
 import type { AuthContextValue } from '../modules/Auth/types.js';
-import { exchangeCodeForToken, refreshAccessToken, logoutRequest } from '../modules/Auth/authApi.js';
+import { exchangeCodeForToken, devLogin, refreshAccessToken, logoutRequest } from '../modules/Auth/authApi.js';
 import { setToken, clearToken, msUntilExpiry, decodeJwtPayload } from '../services/authToken.js';
 import type { JwtPayload } from '../modules/Auth/types.js';
 
@@ -62,6 +62,7 @@ const AuthContext = createContext<AuthContextValue>({
   isLoading: true,
   error: null,
   signIn: async () => { /* noop default */ },
+  devSignIn: async () => { /* noop default */ },
   signOut: async () => { /* noop default */ },
 });
 
@@ -75,6 +76,11 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Guards the mount silent-refresh against React StrictMode's double-invoke in
+  // dev (and any remount), which would otherwise fire two concurrent refreshes
+  // and race the single-use refresh-token rotation — one rotates, the other 401s
+  // and spuriously logs the user out.
+  const didInitRef = useRef(false);
 
   /** Store the token in React state AND the module singleton. */
   const storeToken = useCallback((token: string) => {
@@ -122,6 +128,8 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
 
   /** On mount: attempt a silent refresh to restore an existing session. */
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
     doRefresh()
       .catch(() => { /* noop — user is not authenticated */ })
       .finally(() => setIsLoading(false));
@@ -154,6 +162,26 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
     [storeToken, setUser, scheduleRefresh, doRefresh],
   );
 
+  /** DEV ONLY — sign in as a seeded user without Google (backend gated to non-prod). */
+  const devSignIn = useCallback(
+    async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await devLogin();
+        storeToken(res.access_token);
+        setUser(userFromToken(res.access_token));
+        scheduleRefresh(res.access_token, doRefresh);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Dev sign-in failed');
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [storeToken, scheduleRefresh, doRefresh],
+  );
+
   /** Sign the user out: clear token from memory + invalidate server-side cookie. */
   const signOut = useCallback(async () => {
     if (refreshTimerRef.current !== null) clearTimeout(refreshTimerRef.current);
@@ -173,6 +201,7 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         signIn,
+        devSignIn,
         signOut,
       }}
     >

@@ -8,7 +8,12 @@
  * module (read from Vite env vars), so SignIn and Callback stay in lock-step.
  */
 
+/// <reference types="vite/client" />
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './SignIn.module.css';
+import { useAuth } from '../../context/AuthContext.js';
 import {
   GOOGLE_CLIENT_ID,
   OAUTH_REDIRECT_URI,
@@ -45,8 +50,25 @@ function buildGoogleOAuthUrl(): string {
 }
 
 export default function SignIn() {
+  const navigate = useNavigate();
+  const { devSignIn } = useAuth();
+  const [devBusy, setDevBusy] = useState(false);
+  const [devError, setDevError] = useState<string | null>(null);
+
   const handleSignIn = () => {
     window.location.href = buildGoogleOAuthUrl();
+  };
+
+  const handleDevSignIn = async () => {
+    setDevBusy(true);
+    setDevError(null);
+    try {
+      await devSignIn();
+      navigate('/dashboard', { replace: true });
+    } catch {
+      setDevError('Dev sign-in failed — is the API running?');
+      setDevBusy(false);
+    }
   };
 
   return (
@@ -89,6 +111,32 @@ export default function SignIn() {
         <p className={styles.footer}>
           By signing in you agree to the BOBA Terms of Service.
         </p>
+
+        {import.meta.env.DEV && (
+          <div style={{ marginTop: '1rem', borderTop: '1px dashed #cbd5e1', paddingTop: '1rem' }}>
+            <button
+              type="button"
+              onClick={() => void handleDevSignIn()}
+              disabled={devBusy}
+              data-testid="dev-signin-button"
+              style={{
+                width: '100%',
+                padding: '0.6rem 1rem',
+                border: '1px dashed #94a3b8',
+                borderRadius: '8px',
+                background: 'transparent',
+                color: '#475569',
+                fontSize: '0.85rem',
+                cursor: devBusy ? 'default' : 'pointer',
+              }}
+            >
+              {devBusy ? 'Signing in…' : '🔧 Dev sign-in (seeded owner)'}
+            </button>
+            {devError && (
+              <p style={{ color: '#dc2626', fontSize: '0.75rem', marginTop: '0.5rem' }}>{devError}</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -421,10 +421,21 @@ export class MarketService {
   // ---- Private helpers ----------------------------------------------------
 
   private async _loadDocuments(workspaceId: string): Promise<DocumentRow[]> {
+    // Read real ingested content: documents hold metadata, chunks hold the text.
+    // Aggregate each document's chunks into a single content string so the
+    // existing { id, payload: { title, content }, created_at } shape is kept.
     const { rows } = await this.pool.query<DocumentRow>(
-      `SELECT id, payload, created_at FROM insights
-        WHERE workspace_id = $1 AND type = 'document'
-        ORDER BY created_at DESC
+      `SELECT d.id,
+              jsonb_build_object(
+                'title',   d.title,
+                'content', COALESCE(string_agg(c.content, E'\n' ORDER BY c.chunk_index), '')
+              ) AS payload,
+              d.created_at
+         FROM documents d
+         JOIN chunks c ON c.document_id = d.id
+        WHERE d.workspace_id = $1
+        GROUP BY d.id, d.title, d.created_at
+        ORDER BY d.created_at DESC
         LIMIT 50`,
       [workspaceId],
     );

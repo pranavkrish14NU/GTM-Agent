@@ -244,12 +244,17 @@ describe('GoogleDriveConnector.getFileContent', () => {
     expect(result.content).toBe('Plain text file content here.');
   });
 
-  it('returns a binary placeholder for PDF files', async () => {
+  it('downloads PDF files as raw bytes via downloadFileBinary', async () => {
     const { connector, client } = makeConnector();
+    let binaryCalled = false;
     client.overrides.getFile = async () => FIXTURE_PDF;
+    client.overrides.downloadFileBinary = async () => {
+      binaryCalled = true;
+      return '%PDF-1.4 raw pdf bytes';
+    };
     const result = await connector.getFileContent(WORKSPACE_ID, FIXTURE_PDF.id);
-    expect(result.content).toContain('[BINARY CONTENT:');
-    expect(result.content).toContain('application/pdf');
+    expect(binaryCalled).toBe(true);
+    expect(result.content).toBe('%PDF-1.4 raw pdf bytes');
   });
 
   it('reports correct word count for text content', async () => {

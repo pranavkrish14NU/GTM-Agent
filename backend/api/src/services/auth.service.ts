@@ -197,6 +197,39 @@ export class AuthService {
   }
 
   // -------------------------------------------------------------------------
+  // Dev-only: issue a session for an existing user by email (no Google).
+  // The route that calls this MUST be gated to non-production environments.
+  // -------------------------------------------------------------------------
+  async devIssueTokens(
+    email: string,
+  ): Promise<AuthTokens & { userId: string; workspaceId: string }> {
+    const result = await this.pool.query<{
+      id: string;
+      workspace_id: string;
+      role: string;
+    }>(
+      `SELECT id, workspace_id, role FROM users WHERE email = $1 LIMIT 1`,
+      [email],
+    );
+    if (result.rowCount === 0) {
+      throw new Error(`dev-login: no user found for ${email}`);
+    }
+    const { id: userId, workspace_id: workspaceId, role } = result.rows[0]!;
+
+    const { accessToken, expiresIn } = await this.generateJwt({
+      user_id: userId,
+      workspace_id: workspaceId,
+      email,
+      role,
+    });
+
+    const { rawToken, hashedToken } = this.mintRefreshToken();
+    await this.storeRefreshToken(userId, hashedToken);
+
+    return { accessToken, refreshToken: rawToken, expiresIn, userId, workspaceId };
+  }
+
+  // -------------------------------------------------------------------------
   // Refresh token rotation
   // -------------------------------------------------------------------------
 

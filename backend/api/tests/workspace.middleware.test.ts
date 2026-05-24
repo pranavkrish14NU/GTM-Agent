@@ -108,7 +108,7 @@ describe('withWorkspaceContext', () => {
 
     const calls = (client.query as ReturnType<typeof vi.fn>).mock.calls as string[][];
     expect(calls[0]?.[0]).toBe('BEGIN');
-    expect(calls[1]?.[0]).toBe('SET LOCAL app.current_workspace_id = $1');
+    expect(calls[1]?.[0]).toBe("SELECT set_config('app.current_workspace_id', $1, true)");
     expect(calls[1]?.[1]).toEqual([WORKSPACE_ID]);
     expect(calls[3]?.[0]).toBe('COMMIT');
   });

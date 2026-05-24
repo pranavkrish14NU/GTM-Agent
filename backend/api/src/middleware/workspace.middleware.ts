@@ -85,8 +85,10 @@ export async function withWorkspaceContext<T>(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    // SET LOCAL scopes to the current transaction — safe with connection pools.
-    await client.query('SET LOCAL app.current_workspace_id = $1', [workspaceId]);
+    // `SET LOCAL` cannot bind parameters (Postgres throws "syntax error at or
+    // near $1"). set_config(name, value, is_local=true) has identical
+    // transaction-scoped semantics but accepts a bind value safely.
+    await client.query("SELECT set_config('app.current_workspace_id', $1, true)", [workspaceId]);
     const result = await fn(client);
     await client.query('COMMIT');
     return result;
