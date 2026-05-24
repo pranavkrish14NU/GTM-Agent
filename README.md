@@ -12,7 +12,11 @@ application services, delivered work-order by work-order via Forge.
 
 | Path | Purpose |
 |------|---------|
-| `infra/terraform/` | GCP infrastructure as code — VPC, IAM, state backend, and (later) GKE / Cloud SQL / Redis. See its [README](infra/terraform/README.md). |
+| `backend/api/` | Express + TypeScript API service — all `/v1/` endpoints. OpenAPI spec at `src/openapi.ts`. |
+| `backend/worker/` | Async worker — Drive sync, embedding pipeline. |
+| `deploy/` | Cloud Deploy pipeline (skaffold.yaml, clouddeploy.yaml) and deployment [RUNBOOK](deploy/RUNBOOK.md). |
+| `docs/runbooks/` | **Operational runbooks** — database restore, service scaling, incident response, Drive sync, common errors. See [Runbooks README](docs/runbooks/README.md). |
+| `infra/terraform/` | GCP infrastructure as code — VPC, IAM, state backend, GKE / Cloud SQL / Redis. See its [README](infra/terraform/README.md). |
 | `CLAUDE.md` | Engineering standards and the Forge work-order workflow followed in this repo. |
 
 ## Architecture (target)
