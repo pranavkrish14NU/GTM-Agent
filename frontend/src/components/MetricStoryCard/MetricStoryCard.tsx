@@ -52,9 +52,8 @@ export function MetricStoryCard({ state, onRetry }: MetricStoryCardProps) {
       {data.evidence.length > 0 && (
         <ul className={styles.evidenceList} aria-label="Evidence">
           {data.evidence.map((point, i) => (
-            // Evidence sentences have no stable ID — index is acceptable here
-            // eslint-disable-next-line react/no-array-index-key
-            <li key={i} className={styles.evidenceItem}>
+            // Evidence items are plain strings without stable IDs; index key is acceptable
+            <li key={`evidence-${i}`} className={styles.evidenceItem}>
               {point}
             </li>
           ))}
