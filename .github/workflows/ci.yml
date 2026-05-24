@@ -1,0 +1,64 @@
+name: CI
+
+# Quality gates for every PR and for pushes to main. Until the frontend/backend
+# workspaces land (later work orders), the lint/type-check/test/build steps are
+# skipped gracefully so the pipeline stays green; they activate automatically as
+# soon as a workspace with the matching npm script exists.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Least-privilege token for the workflow.
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref to save minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # Caches the npm download cache keyed on package-lock.json to speed up installs.
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Detect workspaces
+        id: ws
+        run: |
+          if ls frontend/package.json backend/*/package.json packages/*/package.json >/dev/null 2>&1; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No workspaces yet — lint/type-check/test/build skipped until app code lands."
+          fi
+
+      - name: Lint (ESLint)
+        if: steps.ws.outputs.present == 'true'
+        run: npm run lint --workspaces --if-present
+
+      - name: Type check (tsc --noEmit)
+        if: steps.ws.outputs.present == 'true'
+        run: npm run typecheck --workspaces --if-present
+
+      - name: Unit tests (vitest/jest)
+        if: steps.ws.outputs.present == 'true'
+        run: npm run test --workspaces --if-present
+
+      - name: Build
+        if: steps.ws.outputs.present == 'true'
+        run: npm run build --workspaces --if-present

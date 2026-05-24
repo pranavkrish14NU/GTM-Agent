@@ -17,3 +17,15 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+
+# Node / JS
+node_modules/
+npm-debug.log*
+yarn-error.log*
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
