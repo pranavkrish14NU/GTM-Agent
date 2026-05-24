@@ -9,6 +9,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import pg from 'pg';
 import { createAuthRouter } from './routes/auth.js';
+import { createWorkspaceRouter } from './routes/workspaces.js';
 import { AuthService } from './services/auth.service.js';
 import { config } from './config.js';
 
@@ -33,6 +34,9 @@ export function createApp(pool: pg.Pool) {
   // Auth routes.
   const authService = new AuthService(pool);
   app.use('/v1/auth', createAuthRouter(authService));
+
+  // Workspace routes (requires JWT + RBAC — see createWorkspaceRouter).
+  app.use('/v1/workspaces', createWorkspaceRouter(authService, pool));
 
   // 404 handler.
   app.use((_req, res) => {
