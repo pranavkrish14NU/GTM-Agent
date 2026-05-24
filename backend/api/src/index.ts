@@ -45,6 +45,7 @@ import { CampaignService } from './services/campaign.service.js';
 import { MarketService } from './services/market.service.js';
 import { AnalyticsService } from './services/analytics.service.js';
 import { AdminService } from './services/admin.service.js';
+import { InMemoryCacheService } from './services/cache.service.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
@@ -56,6 +57,10 @@ const { Pool } = pg;
 
 export function createApp(pool: pg.Pool) {
   const app = express();
+
+  // Shared cache service — in-memory for single-instance deployments.
+  // Wire in a Redis implementation for multi-replica production environments.
+  const cache = new InMemoryCacheService();
 
   // Security headers on every response — must be first middleware.
   app.use(securityHeaders());
@@ -89,7 +94,7 @@ export function createApp(pool: pg.Pool) {
 
   // Document routes (requires JWT + viewer role — see createDocumentsRouter).
   const documentService = new DocumentService(pool);
-  app.use('/v1/documents', createDocumentsRouter(authService, documentService));
+  app.use('/v1/documents', createDocumentsRouter(authService, documentService, cache));
 
   // Citation routes (nested under /v1/insights/:id — see createCitationsRouter).
   const citationService = new CitationService(pool);
@@ -102,11 +107,11 @@ export function createApp(pool: pg.Pool) {
     new InMemoryTokenBudgetStore(),
   );
   const askService = new AskService(pool, llmGateway);
-  app.use('/v1/ask', createAskRouter(authService, askService));
+  app.use('/v1/ask', createAskRouter(authService, askService, cache));
 
   // Dashboard routes — GTM Command Center health scores and dimension insights.
   const insightService = new InsightService(pool);
-  app.use('/v1/dashboard', createDashboardRouter(authService, insightService));
+  app.use('/v1/dashboard', createDashboardRouter(authService, insightService, cache));
 
   // Brand Intelligence routes — brand voice analysis, consistency scoring, drift detection.
   const brandService = new BrandService(pool);
