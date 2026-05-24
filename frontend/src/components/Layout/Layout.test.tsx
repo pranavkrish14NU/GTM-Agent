@@ -5,27 +5,34 @@
  *   ✓ Renders sidebar, header, and main content area
  *   ✓ Sidebar contains BOBA logo
  *   ✓ Header contains global search input
- *   ✓ All nav items render with correct labels
+ *   ✓ All nav items render with correct labels (admin role)
  *   ✓ Main content area is accessible via skip link target
  *   ✓ Sidebar collapse button toggles aria-label
+ *   ✓ Workspace switcher button rendered
+ *   ✓ Navigation has aria-label
+ *   ✓ Header has banner role
  */
 
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { UserContextProvider } from '../../context/UserContext.js';
+import { MOCK_USER } from '../../data/mock.js';
 import { Layout } from './Layout.js';
 
 function renderLayout(initialPath = '/dashboard') {
   return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/dashboard" element={<div>Dashboard content</div>} />
-          <Route path="/drive" element={<div>Drive content</div>} />
-          <Route path="/brand" element={<div>Brand content</div>} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
+    <UserContextProvider user={MOCK_USER}>
+      <MemoryRouter initialEntries={[initialPath]}>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<div>Dashboard content</div>} />
+            <Route path="/drive" element={<div>Drive content</div>} />
+            <Route path="/brand" element={<div>Brand content</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </UserContextProvider>,
   );
 }
 
@@ -76,7 +83,7 @@ describe('Layout — sidebar navigation', () => {
     expect(screen.getByText('Ask BOBA')).toBeDefined();
   });
 
-  it('renders Settings nav item', () => {
+  it('renders Settings nav item (admin user)', () => {
     renderLayout();
     expect(screen.getByText('Settings')).toBeDefined();
   });

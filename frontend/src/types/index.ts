@@ -37,8 +37,14 @@ export interface NavItem {
   label: string;
   path: string;
   icon: string;
-  /** Minimum role required to see this nav item */
-  minRole?: UserRole;
+  /**
+   * Explicit role allowlist — only users whose role appears here see the item.
+   * Omit to make the item visible to all authenticated users.
+   * Replaces the former minRole field (hierarchy-based) with an explicit set.
+   */
+  requiredRoles?: UserRole[];
+  /** One level of nested sub-navigation items */
+  children?: NavItem[];
   badge?: number;
 }
 
