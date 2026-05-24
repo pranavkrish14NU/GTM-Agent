@@ -8,6 +8,10 @@
  *   Accepts a Cloud Tasks HTTP task whose body contains:
  *     { payload: "<base64-encoded FileProcessTaskPayload JSON>" }
  *
+ * POST /internal/embed-chunks
+ *   Accepts a Cloud Tasks HTTP task to generate embeddings for a document's chunks.
+ *     { payload: "<base64-encoded EmbedChunksTaskPayload JSON>" }
+ *
  *   Response semantics (critical — controls Cloud Tasks retry behaviour):
  *     200  → task succeeded or is permanently unprocessable (no retry)
  *     400  → malformed payload — bad task definition, no retry useful
@@ -20,8 +24,12 @@
 
 import { Router, type Request, type Response } from 'express';
 import type { FileProcessingService, FileProcessTaskPayload } from '../services/file-processing.service.js';
+import type { EmbeddingService, EmbedChunksTaskPayload } from '../services/embedding.service.js';
 
-export function createInternalRouter(fileProcessingService: FileProcessingService): Router {
+export function createInternalRouter(
+  fileProcessingService: FileProcessingService,
+  embeddingService?: EmbeddingService,
+): Router {
   const router = Router();
 
   // -------------------------------------------------------------------------
@@ -83,12 +91,65 @@ export function createInternalRouter(fileProcessingService: FileProcessingServic
   });
 
   // -------------------------------------------------------------------------
+  // POST /internal/embed-chunks
+  // Generates vector embeddings for all pending chunks of a document.
+  // -------------------------------------------------------------------------
+  router.post('/embed-chunks', async (req: Request, res: Response): Promise<void> => {
+    if (!embeddingService) {
+      res.status(503).json({ error: 'Embedding service not configured' });
+      return;
+    }
+
+    const body = req.body as { payload?: string };
+    if (!body?.payload) {
+      res.status(400).json({ error: 'Missing payload field in request body' });
+      return;
+    }
+
+    let taskPayload: EmbedChunksTaskPayload;
+    try {
+      const decoded = Buffer.from(body.payload, 'base64').toString('utf8');
+      taskPayload = JSON.parse(decoded) as EmbedChunksTaskPayload;
+    } catch {
+      res.status(400).json({ error: 'Payload is not valid base64-encoded JSON' });
+      return;
+    }
+
+    const { documentId, workspaceId } = taskPayload;
+    if (!documentId || !workspaceId) {
+      res.status(400).json({
+        error: 'Payload missing required fields: documentId, workspaceId',
+      });
+      return;
+    }
+
+    try {
+      const outcome = await embeddingService.processEmbeddings(taskPayload);
+
+      if (outcome.status === 'skipped') {
+        console.log(`[worker] Embed skipped for document ${documentId}: ${outcome.reason}`);
+        res.json({ status: 'skipped', reason: outcome.reason });
+        return;
+      }
+
+      console.log(
+        `[worker] Embedded ${outcome.chunksEmbedded} chunks for document ${documentId}`,
+      );
+      res.json({ status: 'processed', chunksEmbedded: outcome.chunksEmbedded });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[worker] Transient embedding error for document ${documentId}: ${message}`);
+      res.status(500).json({ error: message });
+    }
+  });
+
+  // -------------------------------------------------------------------------
   // POST /internal/drive-sync
   // Acknowledges sync tasks enqueued by DriveConnectionService.
   // Full sync dispatch is implemented in a subsequent work order.
   // -------------------------------------------------------------------------
   router.post('/drive-sync', (_req: Request, res: Response): void => {
-    res.json({ status: 'accepted', message: 'Sync task received (dispatch pending WO-021)' });
+    res.json({ status: 'accepted', message: 'Sync task received' });
   });
 
   return router;

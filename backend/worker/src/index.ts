@@ -3,13 +3,16 @@
  *
  * Exposes internal HTTP endpoints consumed by Google Cloud Tasks:
  *   POST /internal/file-process  — process a single Drive file into chunks
- *   POST /internal/drive-sync    — accept sync task (dispatch pending WO-021)
+ *   POST /internal/embed-chunks  — generate embeddings for pending chunks
+ *   POST /internal/drive-sync    — accept sync task
  *   GET  /health                 — liveness probe
  */
 
 import express from 'express';
 import pg from 'pg';
+import type { LLMGateway } from '@boba/llm-gateway';
 import { FileProcessingService } from './services/file-processing.service.js';
+import { EmbeddingService } from './services/embedding.service.js';
 import { createInternalRouter } from './routes/internal.js';
 import { config } from './config.js';
 
@@ -19,7 +22,7 @@ const { Pool } = pg;
 // App factory (exported for testing)
 // ---------------------------------------------------------------------------
 
-export function createApp(pool: pg.Pool) {
+export function createApp(pool: pg.Pool, gateway?: LLMGateway) {
   const app = express();
 
   app.use(express.json());
@@ -30,7 +33,8 @@ export function createApp(pool: pg.Pool) {
   });
 
   const fileProcessingService = new FileProcessingService(pool);
-  app.use('/internal', createInternalRouter(fileProcessingService));
+  const embeddingService = gateway ? new EmbeddingService(pool, gateway) : undefined;
+  app.use('/internal', createInternalRouter(fileProcessingService, embeddingService));
 
   // 404 handler.
   app.use((_req, res) => {

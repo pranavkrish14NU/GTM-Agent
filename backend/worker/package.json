@@ -16,6 +16,7 @@
   "dependencies": {
     "@boba/database": "*",
     "@boba/drive-connector": "*",
+    "@boba/llm-gateway": "*",
     "express": "^4.21.2",
     "pg": "^8.13.3",
     "pdf-parse": "^1.1.1"
