@@ -25,10 +25,12 @@
 import { Router, type Request, type Response } from 'express';
 import type { FileProcessingService, FileProcessTaskPayload } from '../services/file-processing.service.js';
 import type { EmbeddingService, EmbedChunksTaskPayload } from '../services/embedding.service.js';
+import type { DriveSyncService, DriveSyncPayload } from '../services/drive-sync.service.js';
 
 export function createInternalRouter(
   fileProcessingService: FileProcessingService,
   embeddingService?: EmbeddingService,
+  driveSyncService?: DriveSyncService,
 ): Router {
   const router = Router();
 
@@ -145,11 +147,48 @@ export function createInternalRouter(
 
   // -------------------------------------------------------------------------
   // POST /internal/drive-sync
-  // Acknowledges sync tasks enqueued by DriveConnectionService.
-  // Full sync dispatch is implemented in a subsequent work order.
+  // Enumerates the connector's files, upserts documents, and runs the
+  // extract → chunk → embed pipeline for each. Body: { payload: base64 JSON }.
   // -------------------------------------------------------------------------
-  router.post('/drive-sync', (_req: Request, res: Response): void => {
-    res.json({ status: 'accepted', message: 'Sync task received' });
+  router.post('/drive-sync', async (req: Request, res: Response): Promise<void> => {
+    if (!driveSyncService) {
+      res.status(503).json({ error: 'Drive sync service not configured' });
+      return;
+    }
+
+    const body = req.body as { payload?: string };
+    if (!body?.payload) {
+      res.status(400).json({ error: 'Missing payload field in request body' });
+      return;
+    }
+
+    let taskPayload: DriveSyncPayload;
+    try {
+      const decoded = Buffer.from(body.payload, 'base64').toString('utf8');
+      taskPayload = JSON.parse(decoded) as DriveSyncPayload;
+    } catch {
+      res.status(400).json({ error: 'Payload is not valid base64-encoded JSON' });
+      return;
+    }
+
+    if (!taskPayload.connectionId || !taskPayload.workspaceId) {
+      res.status(400).json({ error: 'Payload missing required fields: connectionId, workspaceId' });
+      return;
+    }
+
+    try {
+      const result = await driveSyncService.sync(taskPayload);
+      console.log(
+        `[worker] Drive sync complete: ${result.documentsUpserted} docs, ` +
+          `${result.chunksWritten} chunks, ${result.chunksEmbedded} embedded, ` +
+          `${result.errors.length} errors`,
+      );
+      res.json({ status: 'processed', ...result });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[worker] Drive sync failed: ${message}`);
+      res.status(500).json({ error: message });
+    }
   });
 
   return router;

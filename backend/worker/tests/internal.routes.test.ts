@@ -26,6 +26,7 @@ import express from 'express';
 import request from 'supertest';
 import { createInternalRouter } from '../src/routes/internal.js';
 import type { FileProcessingService } from '../src/services/file-processing.service.js';
+import type { DriveSyncService } from '../src/services/drive-sync.service.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -56,11 +57,21 @@ function makeApp(serviceOverrides: Partial<FileProcessingService>) {
     ...serviceOverrides,
   } as unknown as FileProcessingService;
 
+  const mockSync = {
+    sync: vi.fn(async () => ({
+      filesSeen: 2,
+      documentsUpserted: 2,
+      chunksWritten: 4,
+      chunksEmbedded: 4,
+      errors: [],
+    })),
+  } as unknown as DriveSyncService;
+
   const app = express();
   app.use(express.json());
-  app.use('/internal', createInternalRouter(mockService));
+  app.use('/internal', createInternalRouter(mockService, undefined, mockSync));
   app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'boba-worker' }));
-  return { app, mockService };
+  return { app, mockService, mockSync };
 }
 
 // ---------------------------------------------------------------------------
@@ -168,12 +179,36 @@ describe('POST /internal/file-process', () => {
 });
 
 describe('POST /internal/drive-sync', () => {
-  it('returns 200 with accepted message', async () => {
-    const { app } = makeApp({});
-    const res = await request(app)
-      .post('/internal/drive-sync')
-      .send({ payload: makePayload() });
+  it('runs the sync and returns the processed result', async () => {
+    const { app, mockSync } = makeApp({});
+    const payload = Buffer.from(
+      JSON.stringify({ connectionId: 'conn-001', workspaceId: 'ws-001' }),
+    ).toString('base64');
+    const res = await request(app).post('/internal/drive-sync').send({ payload });
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe('accepted');
+    expect(res.body.status).toBe('processed');
+    expect(res.body.documentsUpserted).toBe(2);
+    expect(mockSync.sync).toHaveBeenCalledWith({ connectionId: 'conn-001', workspaceId: 'ws-001' });
+  });
+
+  it('returns 400 when connectionId/workspaceId are missing', async () => {
+    const { app } = makeApp({});
+    const payload = Buffer.from(JSON.stringify({ connectionId: 'conn-001' })).toString('base64');
+    const res = await request(app).post('/internal/drive-sync').send({ payload });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 503 when the sync service is not configured', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(
+      '/internal',
+      createInternalRouter({ processFile: vi.fn() } as unknown as FileProcessingService),
+    );
+    const payload = Buffer.from(
+      JSON.stringify({ connectionId: 'c', workspaceId: 'w' }),
+    ).toString('base64');
+    const res = await request(app).post('/internal/drive-sync').send({ payload });
+    expect(res.status).toBe(503);
   });
 });

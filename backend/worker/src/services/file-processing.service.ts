@@ -25,7 +25,7 @@
 import { createDecipheriv } from 'crypto';
 import { createHash } from 'crypto';
 import type { Pool } from 'pg';
-import { GoogleDriveConnector } from '@boba/drive-connector';
+import { createDriveConnector, type DriveConnector } from '@boba/drive-connector';
 import { extractText, ExtractionError } from '../extractors/text-extractor.js';
 import { chunkText } from '../chunker/chunker.js';
 import { config } from '../config.js';
@@ -122,28 +122,28 @@ export class FileProcessingService {
     const existingHash = docResult.rows[0].content_hash;
 
     // ------------------------------------------------------------------
-    // 2. Fetch encrypted access token from the connection.
+    // 2. Build the Drive connector (mock needs no token; google decrypts one).
+    // 3. Extract text via the connector.
     // ------------------------------------------------------------------
-    const connResult = await this.pool.query<{ access_token_enc: string }>(
-      `SELECT access_token_enc
-         FROM drive_connections
-        WHERE id = $1 AND workspace_id = $2`,
-      [connectionId, workspaceId],
-    );
-
-    if (!connResult.rows[0]) {
-      return {
-        status: 'permanent_failure',
-        reason: `Drive connection ${connectionId} not found for workspace ${workspaceId}`,
-      };
+    let connector: DriveConnector;
+    if (config.driveConnector === 'mock') {
+      connector = createDriveConnector({ type: 'mock' });
+    } else {
+      const connResult = await this.pool.query<{ access_token_enc: string }>(
+        `SELECT access_token_enc
+           FROM drive_connections
+          WHERE id = $1 AND workspace_id = $2`,
+        [connectionId, workspaceId],
+      );
+      if (!connResult.rows[0]) {
+        return {
+          status: 'permanent_failure',
+          reason: `Drive connection ${connectionId} not found for workspace ${workspaceId}`,
+        };
+      }
+      const accessToken = decrypt(connResult.rows[0].access_token_enc, this.keyHex);
+      connector = createDriveConnector({ type: 'google', googleOptions: { accessToken } });
     }
-
-    const accessToken = decrypt(connResult.rows[0].access_token_enc, this.keyHex);
-
-    // ------------------------------------------------------------------
-    // 3. Build the Drive connector and extract text.
-    // ------------------------------------------------------------------
-    const connector = new GoogleDriveConnector({ accessToken });
 
     let text: string;
     try {

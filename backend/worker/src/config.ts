@@ -19,6 +19,9 @@ export const config = {
   /** PostgreSQL connection string */
   databaseUrl: optional('DATABASE_URL', ''),
 
+  /** Drive connector implementation: 'mock' (local/dev) or 'google' (prod). */
+  driveConnector: optional('DRIVE_CONNECTOR', 'mock'),
+
   /**
    * AES-256-GCM key (64-char hex / 32 bytes) used to decrypt Drive OAuth tokens.
    * Must match the key used by the API service to encrypt them.

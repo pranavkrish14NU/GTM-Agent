@@ -10,9 +10,15 @@
 
 import express from 'express';
 import pg from 'pg';
-import type { LLMGateway } from '@boba/llm-gateway';
+import {
+  type LLMGateway,
+  LLMGatewayService,
+  MockLLMProvider,
+  InMemoryTokenBudgetStore,
+} from '@boba/llm-gateway';
 import { FileProcessingService } from './services/file-processing.service.js';
 import { EmbeddingService } from './services/embedding.service.js';
+import { DriveSyncService } from './services/drive-sync.service.js';
 import { createInternalRouter } from './routes/internal.js';
 import { config } from './config.js';
 
@@ -34,7 +40,8 @@ export function createApp(pool: pg.Pool, gateway?: LLMGateway) {
 
   const fileProcessingService = new FileProcessingService(pool);
   const embeddingService = gateway ? new EmbeddingService(pool, gateway) : undefined;
-  app.use('/internal', createInternalRouter(fileProcessingService, embeddingService));
+  const driveSyncService = new DriveSyncService(pool, fileProcessingService, embeddingService);
+  app.use('/internal', createInternalRouter(fileProcessingService, embeddingService, driveSyncService));
 
   // 404 handler.
   app.use((_req, res) => {
@@ -51,7 +58,14 @@ export function createApp(pool: pg.Pool, gateway?: LLMGateway) {
 if (process.env['NODE_ENV'] !== 'test') {
   const pool = new Pool({ connectionString: config.databaseUrl });
 
-  const app = createApp(pool);
+  // Embeddings run through the LLM gateway. Locally this uses the mock provider
+  // (deterministic vectors); production wires real providers via env.
+  const gateway = new LLMGatewayService(
+    { providers: [new MockLLMProvider()] },
+    new InMemoryTokenBudgetStore(),
+  );
+
+  const app = createApp(pool, gateway);
 
   app.listen(config.port, () => {
     console.log(`BOBA Worker listening on port ${config.port}`);
