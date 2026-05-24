@@ -47,6 +47,10 @@ jobs:
             echo "::notice::No workspaces yet — lint/type-check/test/build skipped until app code lands."
           fi
 
+      - name: Build shared packages
+        if: steps.ws.outputs.present == 'true'
+        run: npm run build --workspace packages/database --workspace packages/drive-connector --workspace packages/llm-gateway
+
       - name: Lint (ESLint)
         if: steps.ws.outputs.present == 'true'
         run: npm run lint --workspaces --if-present
