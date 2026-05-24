@@ -22,7 +22,8 @@ infra/terraform/
 │   ├── iam/                   # api-gateway / worker-pods / ci-cd-deployer service accounts
 │   ├── project-services/      # enables required GCP APIs
 │   ├── state-backend/         # GCS state bucket (versioned, locked, private)
-│   └── gke/                   # private regional GKE cluster, autoscaling node pools, Workload Identity (WO-002)
+│   ├── gke/                   # private regional GKE cluster, autoscaling node pools, Workload Identity (WO-002)
+│   └── cloud-sql/             # private Cloud SQL PostgreSQL + pgvector, read replica, backups/PITR, Secret Manager creds (WO-003)
 ├── backend.tf                 # gcs backend (bucket supplied at init time)
 ├── main.tf                    # composes the modules
 ├── variables.tf / outputs.tf
@@ -112,3 +113,25 @@ WO-001's VPC and IAM:
 > Nodes run as WO-001's `worker-pods` service account. Because the control
 > plane has no public endpoint, CI/CD must reach it from within the VPC (set
 > `gke_master_authorized_networks` to in-VPC/CI ranges).
+
+## WO-003 — Cloud SQL PostgreSQL + pgvector
+
+`modules/cloud-sql` provisions the data layer over WO-001's Private Service Access peering:
+
+| Criterion | Where |
+|-----------|-------|
+| PostgreSQL 15+ with pgvector available | `database_version = POSTGRES_15` (pgvector ships with PG15+) |
+| `CREATE EXTENSION vector;` | runtime migration step (see note) |
+| PgBouncer, max 100 connections | `max_connections` flag = 100; PgBouncer runs as a GKE sidecar (app layer) |
+| Read replica (same region) | `google_sql_database_instance.replica` |
+| Daily backups, 7-day retention, PITR | `backup_configuration` (retained_backups = 7, PITR on) |
+| Private IP only, no public IP | `ip_configuration { ipv4_enabled = false, private_network }` |
+| SSL/TLS enforced | `ssl_mode = "ENCRYPTED_ONLY"` (clients use `sslmode=verify-ca`) |
+
+> **pgvector** and the application schema are enabled at runtime via a DB
+> migration (`CREATE EXTENSION IF NOT EXISTS vector;`), run from inside the VPC
+> (Cloud SQL Auth Proxy / a GKE job) — Terraform provisions the instance, not
+> in-database objects. **PgBouncer** likewise deploys as a GKE sidecar in a
+> later app-layer WO. DB credentials are generated and published to **Secret
+> Manager** (`boba-db-credentials-<env>`); the `api-gateway`/`worker-pods` SAs
+> get `secretAccessor`.

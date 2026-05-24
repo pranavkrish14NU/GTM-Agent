@@ -21,3 +21,7 @@ gke_deletion_protection     = false
 gke_master_authorized_networks = [
   { cidr_block = "10.110.0.0/20", display_name = "staging-app-subnet" },
 ]
+
+# Cloud SQL (WO-003)
+cloud_sql_tier                = "db-custom-2-7680"
+cloud_sql_deletion_protection = false
