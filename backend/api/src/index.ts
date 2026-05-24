@@ -20,6 +20,7 @@ import { createBrandRouter } from './routes/brand.js';
 import { createPersonaRouter } from './routes/personas.js';
 import { createCompetitorRouter } from './routes/competitors.js';
 import { createWinLossRouter } from './routes/winloss.js';
+import { createContentRouter } from './routes/content.js';
 import { AuthService } from './services/auth.service.js';
 import { DriveConnectionService } from './services/drive-connection.service.js';
 import { DocumentService } from './services/document.service.js';
@@ -30,6 +31,7 @@ import { BrandService } from './services/brand.service.js';
 import { PersonaService } from './services/persona.service.js';
 import { CompetitorService } from './services/competitor.service.js';
 import { WinLossService } from './services/winloss.service.js';
+import { ContentService } from './services/content.service.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
@@ -98,6 +100,10 @@ export function createApp(pool: pg.Pool) {
   // Win/Loss Analysis routes — deal pattern extraction and trend analysis.
   const winLossService = new WinLossService(pool);
   app.use('/v1/winloss', createWinLossRouter(authService, winLossService));
+
+  // Content Generation routes — multi-format content with brand voice and persona fit scoring.
+  const contentService = new ContentService(pool, llmGateway);
+  app.use('/v1/content', createContentRouter(authService, contentService));
 
   // 404 handler.
   app.use((_req, res) => {
