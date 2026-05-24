@@ -46,6 +46,7 @@ import { MarketService } from './services/market.service.js';
 import { AnalyticsService } from './services/analytics.service.js';
 import { AdminService } from './services/admin.service.js';
 import { InMemoryCacheService } from './services/cache.service.js';
+import { createDocsRouter } from './middleware/docs.middleware.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
@@ -80,6 +81,9 @@ export function createApp(pool: pg.Pool) {
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', service: 'boba-api', version: '0.1.0' });
   });
+
+  // API documentation — spec always available; Swagger UI non-production only.
+  app.use('/', createDocsRouter());
 
   // Auth routes.
   const authService = new AuthService(pool);
