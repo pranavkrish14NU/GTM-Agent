@@ -22,13 +22,30 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { UserContextProvider } from '../../context/UserContext.js';
 import { WorkspaceContextProvider, WorkspaceContext } from '../../context/WorkspaceContext.js';
 import { MOCK_USER, MOCK_WORKSPACES, MOCK_SEARCH_RESULTS } from '../../data/mock.js';
 import { Header } from './Header.js';
 import type { Workspace } from '../../types/index.js';
+
+// ---------------------------------------------------------------------------
+// Mock AuthContext — Header needs useAuth for sign-out
+// ---------------------------------------------------------------------------
+
+const mockSignOut = vi.fn().mockResolvedValue(undefined);
+
+vi.mock('../../context/AuthContext.js', () => ({
+  useAuth: () => ({
+    user: { id: 'u1', email: 'test@boba.test', displayName: 'Test User', role: 'admin', workspaceId: 'ws-1' },
+    isAuthenticated: true,
+    isLoading: false,
+    error: null,
+    signIn: vi.fn(),
+    signOut: mockSignOut,
+  }),
+}));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -348,5 +365,45 @@ describe('Header — mock data fixtures', () => {
       expect(ws.name).toBeTruthy();
       expect(ws.plan).toBeTruthy();
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Sign-out user menu
+// ---------------------------------------------------------------------------
+
+describe('Header — user menu and sign-out', () => {
+  beforeEach(() => {
+    mockSignOut.mockClear();
+  });
+
+  it('user avatar is rendered', () => {
+    renderHeader();
+    expect(screen.getByTestId('user-avatar')).toBeDefined();
+  });
+
+  it('user menu is hidden initially', () => {
+    renderHeader();
+    expect(screen.queryByTestId('user-menu')).toBeNull();
+  });
+
+  it('clicking user avatar opens user menu', () => {
+    renderHeader();
+    fireEvent.click(screen.getByTestId('user-avatar'));
+    expect(screen.getByTestId('user-menu')).toBeDefined();
+  });
+
+  it('user menu contains sign-out button', () => {
+    renderHeader();
+    fireEvent.click(screen.getByTestId('user-avatar'));
+    expect(screen.getByTestId('signout-button')).toBeDefined();
+    expect(screen.getByTestId('signout-button').textContent).toBe('Sign out');
+  });
+
+  it('clicking sign-out calls signOut from AuthContext', async () => {
+    renderHeader();
+    fireEvent.click(screen.getByTestId('user-avatar'));
+    fireEvent.click(screen.getByTestId('signout-button'));
+    await waitFor(() => expect(mockSignOut).toHaveBeenCalledTimes(1));
   });
 });

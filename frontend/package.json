@@ -13,6 +13,10 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
     "test": "vitest run --reporter=verbose",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "PWDEBUG=1 playwright test",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -21,6 +25,7 @@
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.0",
     "@testing-library/user-event": "^14.5.2",

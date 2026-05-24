@@ -10,6 +10,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
     css: false,
+    // Exclude Playwright E2E tests — they run via `npm run test:e2e`, not vitest
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
   },
   build: {
     // Target under 500KB initial load — split vendor chunk

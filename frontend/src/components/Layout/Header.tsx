@@ -19,6 +19,7 @@ import { debounce } from '../../utils/index.js';
 import { stringToColor } from '../../utils/index.js';
 import { useUser } from '../../context/UserContext.js';
 import { useWorkspace } from '../../context/WorkspaceContext.js';
+import { useAuth } from '../../context/AuthContext.js';
 import { MOCK_SEARCH_RESULTS } from '../../data/mock.js';
 import type { DriveConnectionStatus, SearchResultGroup } from '../../types/index.js';
 import styles from './Header.module.css';
@@ -64,7 +65,10 @@ export function Header({
 }: HeaderProps) {
   const { user } = useUser();
   const { workspace, workspaces, switchWorkspace } = useWorkspace();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,6 +110,9 @@ export function Header({
       }
       if (workspaceBtnRef.current && !workspaceBtnRef.current.contains(target)) {
         setIsWorkspaceOpen(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setIsUserMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleMouseDown);
@@ -339,16 +346,52 @@ export function Header({
           )}
         </div>
 
-        {/* User avatar */}
-        <div
-          className={styles.avatar}
-          style={{ backgroundColor: stringToColor(userName) }}
-          role="button"
-          tabIndex={0}
-          aria-label={`User menu for ${userName}`}
-          data-testid="user-avatar"
-        >
-          {initials}
+        {/* User avatar + sign-out dropdown */}
+        <div className={styles.userMenuWrap} ref={userMenuRef}>
+          <div
+            className={styles.avatar}
+            style={{ backgroundColor: stringToColor(userName) }}
+            role="button"
+            tabIndex={0}
+            aria-label={`User menu for ${userName}`}
+            aria-haspopup="menu"
+            aria-expanded={isUserMenuOpen}
+            data-testid="user-avatar"
+            onClick={() => setIsUserMenuOpen((v) => !v)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setIsUserMenuOpen((v) => !v);
+              }
+              if (e.key === 'Escape') setIsUserMenuOpen(false);
+            }}
+          >
+            {initials}
+          </div>
+
+          {isUserMenuOpen && (
+            <div
+              className={styles.userMenu}
+              role="menu"
+              aria-label="User menu"
+              data-testid="user-menu"
+            >
+              <div className={styles.userMenuEmail} role="menuitem" aria-disabled="true">
+                {user?.email ?? userName}
+              </div>
+              <button
+                className={styles.signOutBtn}
+                role="menuitem"
+                data-testid="signout-button"
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  void signOut().then(() => navigate('/signin'));
+                }}
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
