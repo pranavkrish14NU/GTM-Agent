@@ -96,6 +96,28 @@ export interface Insight {
 }
 
 // ---------------------------------------------------------------------------
+// Search
+// ---------------------------------------------------------------------------
+
+export type SearchResultType = 'document' | 'insight' | 'content';
+
+export interface SearchResult {
+  id: string;
+  title: string;
+  type: SearchResultType;
+  /** Short excerpt or description for the result row */
+  excerpt?: string;
+  /** Route to navigate to when the result is selected */
+  path: string;
+}
+
+export interface SearchResultGroup {
+  /** Module label shown as a group header in the dropdown */
+  module: 'Documents' | 'Insights' | 'Content';
+  results: SearchResult[];
+}
+
+// ---------------------------------------------------------------------------
 // UI state
 // ---------------------------------------------------------------------------
 
