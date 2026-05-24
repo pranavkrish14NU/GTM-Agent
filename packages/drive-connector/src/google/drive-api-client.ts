@@ -89,6 +89,14 @@ export interface DriveAPIClient {
   downloadFile(fileId: string): Promise<string>;
 
   /**
+   * GET /drive/v3/files/:id?alt=media (binary-safe)
+   * Downloads raw bytes and returns them latin-1 encoded so a downstream
+   * `Buffer.from(content, 'binary')` reconstructs the exact bytes (used for
+   * PDFs, which must be parsed as binary).
+   */
+  downloadFileBinary(fileId: string): Promise<string>;
+
+  /**
    * GET /drive/v3/files/:id/permissions
    * Returns the ACL entries for a file.
    */
@@ -170,6 +178,25 @@ export class GoogleAPIDriveClient implements DriveAPIClient {
     return response.text();
   }
 
+  /**
+   * Like fetchText but preserves raw bytes: returns the body latin-1 encoded so
+   * binary content (e.g. PDFs) survives intact for `Buffer.from(s, 'binary')`.
+   */
+  private async fetchBinary(url: string, init?: RequestInit): Promise<string> {
+    const response = await withRetry(
+      () => fetch(url, { ...init, headers: { ...this.authHeaders(), ...(init?.headers ?? {}) } }),
+      this.retryOptions,
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Google Drive API error ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return Buffer.from(await response.arrayBuffer()).toString('latin1');
+  }
+
   // -------------------------------------------------------------------------
   // DriveAPIClient implementation
   // -------------------------------------------------------------------------
@@ -205,6 +232,10 @@ export class GoogleAPIDriveClient implements DriveAPIClient {
 
   async downloadFile(fileId: string): Promise<string> {
     return this.fetchText(`${DRIVE_BASE}/files/${fileId}?alt=media`);
+  }
+
+  async downloadFileBinary(fileId: string): Promise<string> {
+    return this.fetchBinary(`${DRIVE_BASE}/files/${fileId}?alt=media`);
   }
 
   async getPermissions(fileId: string): Promise<RawPermissionListResponse> {

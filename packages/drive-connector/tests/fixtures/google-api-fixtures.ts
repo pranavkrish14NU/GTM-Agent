@@ -121,6 +121,7 @@ export class MockDriveAPIClient implements DriveAPIClient {
     getFile: (fileId: string) => Promise<RawDriveFile>;
     exportFile: (fileId: string, mimeType: string) => Promise<string>;
     downloadFile: (fileId: string) => Promise<string>;
+    downloadFileBinary: (fileId: string) => Promise<string>;
     getPermissions: (fileId: string) => Promise<RawPermissionListResponse>;
   }> = {};
 
@@ -148,6 +149,11 @@ export class MockDriveAPIClient implements DriveAPIClient {
   async downloadFile(fileId: string): Promise<string> {
     if (this.overrides.downloadFile) return this.overrides.downloadFile(fileId);
     return `[Downloaded content of ${fileId}]`;
+  }
+
+  async downloadFileBinary(fileId: string): Promise<string> {
+    if (this.overrides.downloadFileBinary) return this.overrides.downloadFileBinary(fileId);
+    return `[Binary bytes of ${fileId}]`;
   }
 
   async getPermissions(fileId: string): Promise<RawPermissionListResponse> {
