@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+// Router config files export route data alongside JSX helpers — this is by design.
 import { lazy, Suspense, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout/index.js';

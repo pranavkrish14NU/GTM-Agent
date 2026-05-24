@@ -284,7 +284,7 @@ export class AuthService {
       .setAudience(config.jwt.audience)
       .setIssuedAt(now)
       .setExpirationTime(exp)
-      .setSubject(claims.user_id)
+      .setSubject(claims.user_id as string)
       .sign(privateKey);
 
     return { accessToken, expiresIn: config.jwt.accessTokenTtlSeconds };
