@@ -6,7 +6,8 @@
  * Debounce a function call.
  * PRD requirement: 500ms debounce on global search.
  */
-export function debounce<T extends (...args: unknown[]) => void>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function debounce<T extends (...args: any[]) => void>(
   fn: T,
   delayMs: number,
 ): (...args: Parameters<T>) => void {
