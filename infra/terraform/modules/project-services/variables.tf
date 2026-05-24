@@ -18,6 +18,7 @@ variable "activate_apis" {
     "iam.googleapis.com",
     "iamcredentials.googleapis.com",
     "artifactregistry.googleapis.com",
+    "containerscanning.googleapis.com",
     "logging.googleapis.com",
     "monitoring.googleapis.com",
     "cloudtrace.googleapis.com",

@@ -132,6 +132,19 @@ module "cloud_tasks" {
   depends_on = [module.project_services, module.iam]
 }
 
+module "artifact_registry" {
+  source = "./modules/artifact-registry"
+
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+
+  # The CI/CD deployer pushes images.
+  writer_members = ["serviceAccount:${module.iam.ci_cd_deployer_sa_email}"]
+
+  depends_on = [module.project_services, module.iam]
+}
+
 module "secrets_kms" {
   source = "./modules/secrets-kms"
 

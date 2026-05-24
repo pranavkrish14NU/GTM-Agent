@@ -1,0 +1,93 @@
+name: CD
+
+# Build + push service container images to Artifact Registry on every successful
+# CI run on main. No-ops safely until (a) a service Dockerfile exists and (b) the
+# repo variable DEPLOY_ENABLED is "true" with Workload Identity Federation vars set.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write # required for Workload Identity Federation
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Detect buildable services
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.detect.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect services with a Dockerfile
+        id: detect
+        run: |
+          svc=()
+          for d in backend/*/; do
+            name="$(basename "$d")"
+            if [ -f "${d}Dockerfile" ] && [ -f "${d}package.json" ]; then
+              svc+=("$name")
+            fi
+          done
+          if [ "${#svc[@]}" -eq 0 ] || [ "${{ vars.DEPLOY_ENABLED }}" != "true" ]; then
+            echo "services=[]" >> "$GITHUB_OUTPUT"
+            echo "::notice::No buildable services yet (or DEPLOY_ENABLED!=true) — skipping image build."
+          else
+            printf -v joined '"%s",' "${svc[@]}"
+            echo "services=[${joined%,}]" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-push:
+    name: Build & push ${{ matrix.service }}
+    needs: prepare
+    if: ${{ needs.prepare.outputs.services != '[]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        service: ${{ fromJSON(needs.prepare.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.CICD_SA_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${{ vars.AR_LOCATION }}-docker.pkg.dev" --quiet
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Image metadata (tags)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ vars.AR_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT }}/${{ vars.AR_REPOSITORY }}/${{ matrix.service }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

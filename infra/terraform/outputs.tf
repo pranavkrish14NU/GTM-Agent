@@ -97,3 +97,8 @@ output "secret_ids" {
   description = "Map of logical secret name -> Secret Manager secret ID."
   value       = module.secrets_kms.secret_ids
 }
+
+output "artifact_registry_url" {
+  description = "Docker registry URL for pushing/pulling BOBA service images."
+  value       = module.artifact_registry.registry_url
+}
