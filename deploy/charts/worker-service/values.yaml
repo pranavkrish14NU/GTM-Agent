@@ -1,0 +1,55 @@
+# Default values for the worker-service chart. Per-environment overrides live in
+# values-<env>.yaml.
+replicaCount: 2
+
+image:
+  repository: REGISTRY/worker
+  tag: latest
+  pullPolicy: IfNotPresent
+
+containerPort: 8080
+
+serviceAccount:
+  name: boba-worker
+  gcpServiceAccount: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+# AC: Worker request 512m/1Gi, limit 2000m/2Gi.
+resources:
+  requests:
+    cpu: 512m
+    memory: 1Gi
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+
+# AC: Worker HPA min 2, max 20, target queue-depth (external) metric.
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 20
+  externalMetricName: "custom.googleapis.com|cloudtasks|queue|depth"
+  targetQueueDepth: "100"
+
+pdb:
+  minAvailable: 1
+
+probes:
+  liveness: /healthz
+  readiness: /readyz
+
+# Schedule onto the dedicated worker node pool (tainted in the GKE module).
+nodeSelector:
+  pool: worker
+
+tolerations:
+  - key: workload
+    operator: Equal
+    value: worker
+    effect: NoSchedule
+
+config:
+  NODE_ENV: production

@@ -1,0 +1,6 @@
+image:
+  repository: us-central1-docker.pkg.dev/boba-prod-000000/boba-containers-production/worker
+serviceAccount:
+  gcpServiceAccount: boba-worker-production@boba-prod-000000.iam.gserviceaccount.com
+config:
+  NODE_ENV: production

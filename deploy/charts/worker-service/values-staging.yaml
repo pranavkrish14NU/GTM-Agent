@@ -1,0 +1,6 @@
+image:
+  repository: us-central1-docker.pkg.dev/boba-staging-000000/boba-containers-staging/worker
+serviceAccount:
+  gcpServiceAccount: boba-worker-staging@boba-staging-000000.iam.gserviceaccount.com
+config:
+  NODE_ENV: staging
