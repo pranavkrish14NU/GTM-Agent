@@ -25,6 +25,7 @@ import { createDriveRouter } from './routes/drive.js';
 import { createCampaignRouter } from './routes/campaigns.js';
 import { createMarketRouter } from './routes/market.js';
 import { createAnalyticsRouter } from './routes/analytics.js';
+import { createAdminRouter } from './routes/admin.js';
 import { AuthService } from './services/auth.service.js';
 import { DriveConnectionService } from './services/drive-connection.service.js';
 import { DocumentService } from './services/document.service.js';
@@ -40,6 +41,7 @@ import { ExportService, HttpDriveApiClient } from './services/export.service.js'
 import { CampaignService } from './services/campaign.service.js';
 import { MarketService } from './services/market.service.js';
 import { AnalyticsService } from './services/analytics.service.js';
+import { AdminService } from './services/admin.service.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
@@ -134,6 +136,10 @@ export function createApp(pool: pg.Pool) {
   // Analytics Dashboard routes — GTM dimension trends, narrative summaries, and QBR export.
   const analyticsService = new AnalyticsService(pool);
   app.use('/v1/analytics', createAnalyticsRouter(authService, analyticsService));
+
+  // Admin Settings routes — connection management, user roles, sync schedule, audit logs.
+  const adminService = new AdminService(pool);
+  app.use('/v1/admin', createAdminRouter(authService, adminService));
 
   // 404 handler.
   app.use((_req, res) => {
