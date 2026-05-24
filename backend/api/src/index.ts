@@ -16,12 +16,14 @@ import { createDocumentsRouter } from './routes/documents.js';
 import { createCitationsRouter } from './routes/citations.js';
 import { createAskRouter } from './routes/ask.js';
 import { createDashboardRouter } from './routes/dashboard.js';
+import { createBrandRouter } from './routes/brand.js';
 import { AuthService } from './services/auth.service.js';
 import { DriveConnectionService } from './services/drive-connection.service.js';
 import { DocumentService } from './services/document.service.js';
 import { CitationService } from './services/citation.service.js';
 import { AskService } from './services/ask.service.js';
 import { InsightService } from './services/insight.service.js';
+import { BrandService } from './services/brand.service.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
@@ -74,6 +76,10 @@ export function createApp(pool: pg.Pool) {
   // Dashboard routes — GTM Command Center health scores and dimension insights.
   const insightService = new InsightService(pool);
   app.use('/v1/dashboard', createDashboardRouter(authService, insightService));
+
+  // Brand Intelligence routes — brand voice analysis, consistency scoring, drift detection.
+  const brandService = new BrandService(pool);
+  app.use('/v1/brand', createBrandRouter(authService, brandService));
 
   // 404 handler.
   app.use((_req, res) => {
