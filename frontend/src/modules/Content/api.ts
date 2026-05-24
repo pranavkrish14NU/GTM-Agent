@@ -14,6 +14,7 @@ import type {
   RefineParams,
   GeneratedContent,
   ContentDraft,
+  ContentType,
   DraftsResult,
   DriveFolder,
   SaveToDriveParams,
@@ -36,15 +37,31 @@ export function refineContent(params: RefineParams): Promise<GeneratedContent> {
   return api.post<GeneratedContent>('/v1/content/refine', params);
 }
 
+/** The list endpoint returns draft summaries in the API's own field names. */
+interface RawDraft {
+  id: string;
+  topic?: string;
+  type: ContentType;
+  created_at: string;
+  brand_voice_score?: number;
+}
+
 /**
  * Fetch the list of previously generated content drafts for this workspace.
  *
- * The API returns a bare array; normalise into DraftsResult so `result.drafts`
- * is always a defined array.
+ * The API returns a paginated { data: draft[] } envelope with its own field
+ * names; normalise into the DraftsResult shape the sidebar expects.
  */
 export async function getDrafts(): Promise<DraftsResult> {
-  const data = await api.get<ContentDraft[] | DraftsResult | null>('/v1/content/drafts');
-  const drafts = Array.isArray(data) ? data : (data?.drafts ?? []);
+  const data = await api.get<{ data?: RawDraft[] } | RawDraft[] | null>('/v1/content/drafts');
+  const raw = Array.isArray(data) ? data : (data?.data ?? []);
+  const drafts: ContentDraft[] = raw.map((d) => ({
+    content_id: d.id,
+    title: d.topic ?? 'Untitled draft',
+    content_type: d.type,
+    created_at: d.created_at,
+    brand_voice_score: d.brand_voice_score ?? 0,
+  }));
   return { drafts };
 }
 
