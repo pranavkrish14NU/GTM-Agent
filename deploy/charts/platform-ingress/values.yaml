@@ -1,0 +1,34 @@
+# Requires the NGINX Ingress Controller and cert-manager to be installed in the
+# cluster (upstream charts ingress-nginx + jetstack/cert-manager). This chart
+# provides the ClusterIssuer + Ingress that use them.
+domain: boba.example.com
+ingressClassName: nginx
+
+# AC: 100 requests/minute per IP for API endpoints.
+rateLimitRpm: 100
+
+tlsSecretName: boba-tls
+
+clusterIssuer:
+  name: letsencrypt-prod
+  acmeServer: https://acme-v02.api.letsencrypt.org/directory
+  email: platform@example.com
+
+apiService:
+  name: boba-api-service
+  port: 80
+  pathPrefix: /api
+
+frontendService:
+  name: boba-frontend
+  port: 80
+  pathPrefix: /
+
+# Cloud Armor WAF — creates a GKE BackendConfig that app services can reference.
+# Set policyName to the terraform output `cloud_armor_policy` for the target environment.
+# App services attach by annotating their Service with:
+#   cloud.google.com/backend-config: '{"default": "<release-name>-platform-ingress-backend-config"}'
+cloudArmor:
+  enabled: true
+  # Default matches boba-waf-dev (tf module naming: boba-waf-<environment>)
+  policyName: boba-waf-dev

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: platform-ingress
+description: BOBA ingress (TLS via cert-manager Let's Encrypt) + HTTP->HTTPS + rate limiting
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -1,0 +1,5 @@
+domain: boba.example.com
+clusterIssuer:
+  email: platform@example.com
+cloudArmor:
+  policyName: boba-waf-production

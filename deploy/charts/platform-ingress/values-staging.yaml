@@ -1,0 +1,5 @@
+domain: staging.boba.example.com
+clusterIssuer:
+  email: platform-staging@example.com
+cloudArmor:
+  policyName: boba-waf-staging

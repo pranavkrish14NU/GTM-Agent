@@ -73,6 +73,11 @@ output "redis_host" {
   value       = module.redis.host
 }
 
+output "cloud_armor_policy" {
+  description = "Cloud Armor security policy name (attach to backend services / Ingress)."
+  value       = module.cloud_armor.security_policy_name
+}
+
 output "redis_credentials_secret" {
   description = "Secret Manager secret ID holding Redis host/port/AUTH."
   value       = module.redis.credentials_secret_id
