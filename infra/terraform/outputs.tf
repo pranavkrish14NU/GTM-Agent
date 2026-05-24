@@ -87,3 +87,13 @@ output "cloud_tasks_dead_letter_queue" {
   description = "Cloud Tasks dead-letter queue name."
   value       = module.cloud_tasks.dead_letter_queue_name
 }
+
+output "kms_key_ring" {
+  description = "KMS key ring ID."
+  value       = module.secrets_kms.key_ring_id
+}
+
+output "secret_ids" {
+  description = "Map of logical secret name -> Secret Manager secret ID."
+  value       = module.secrets_kms.secret_ids
+}

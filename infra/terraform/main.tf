@@ -131,3 +131,16 @@ module "cloud_tasks" {
 
   depends_on = [module.project_services, module.iam]
 }
+
+module "secrets_kms" {
+  source = "./modules/secrets-kms"
+
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+
+  api_gateway_sa_email = module.iam.api_gateway_sa_email
+  worker_pods_sa_email = module.iam.worker_pods_sa_email
+
+  depends_on = [module.project_services, module.iam]
+}
