@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="https://agent.opsera.ai/favicon.png">
+  <title>Security Scan Report - GTM-Agent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #9947EB; --accent: #CF940C;
+      --bg: #ffffff; --bg-secondary: #F3F3F1; --card: #ffffff;
+      --text: #3D3B36; --text-light: #67788d; --border: #E6E5E3; --border-light: #f0efed;
+      --success: #00AA84; --warning: #CF940C; --danger: #dc3545; --info: #1989F9;
+      --critical: #dc3545; --high: #c05621; --medium: #CF940C; --low: #00AA84;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04); --radius: 0.5rem; --sidebar-width: 260px;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+    h1 { font-size: 1.75rem; font-weight: 700; }
+    h2 { font-size: 1.35rem; font-weight: 600; color: var(--primary); }
+    h3 { font-size: 1.1rem; font-weight: 600; color: var(--primary); margin: 1.25rem 0 0.5rem; }
+    p { margin-bottom: 0.75rem; }
+    ul, ol { margin: 0.5rem 0 0.75rem 1.5rem; }
+    li { margin-bottom: 0.25rem; }
+    .page-wrapper { display: flex; min-height: 100vh; }
+    .sidebar { position: sticky; top: 0; width: var(--sidebar-width); height: 100vh; background: var(--card); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar-nav { flex: 1; padding: 0.75rem 0; }
+    .sidebar-group-label { padding: 0.6rem 1.25rem 0.3rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-light); }
+    .sidebar-link { display: block; padding: 0.35rem 1.25rem; font-size: 0.82rem; color: var(--text-light); text-decoration: none; border-left: 3px solid transparent; }
+    .sidebar-link:hover { color: var(--text); background: var(--bg-secondary); }
+    .sidebar-link.sub { padding-left: 2rem; font-size: 0.78rem; }
+    .sidebar-footer { padding: 0.75rem 1.25rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--text-light); }
+    .page-main { flex: 1; min-width: 0; }
+    .header { background: linear-gradient(135deg, #250e3c 0%, #9947EB 60%, #CF940C 100%); color: #fff; padding: 2.5rem 2rem; }
+    .header-content { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; gap: 1.5rem; }
+    .header-logo img { height: 36px; }
+    .header h1 { color: #fff; margin-bottom: 0.4rem; }
+    .header .meta { opacity: 0.85; font-size: 0.875rem; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
+    .section h2 { border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; margin-bottom: 1.25rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    thead th { background: var(--primary); color: #fff; padding: 0.65rem 0.75rem; text-align: left; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+    tbody td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border-light); }
+    tbody tr:nth-child(even) { background: var(--bg-secondary); }
+    .risk-score-container { display: flex; align-items: center; justify-content: center; gap: 3rem; padding: 2rem; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1.5rem; }
+    .score-ring { position: relative; width: 180px; height: 180px; }
+    .score-ring svg { transform: rotate(-90deg); }
+    .score-ring circle { fill: none; stroke-width: 12; }
+    .score-ring .bg { stroke: var(--border); }
+    .score-ring .value { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+    .score-ring .percentage { font-size: 2.5rem; font-weight: 700; }
+    .score-ring .label { font-size: 0.875rem; }
+    .severity-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .severity-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; text-align: center; }
+    .severity-card .count { font-size: 2.5rem; font-weight: 700; }
+    .severity-card .label { color: var(--text-light); font-size: 0.8rem; margin-top: 0.25rem; }
+    .severity-card.critical .count { color: var(--critical); }
+    .severity-card.high .count { color: var(--high); }
+    .severity-card.medium .count { color: var(--medium); }
+    .severity-card.low .count { color: var(--low); }
+    .scan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+    .scan-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; text-align: center; }
+    .scan-card .icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .scan-card .name { font-size: 0.8rem; font-weight: 600; }
+    .scan-card .status { font-size: 0.75rem; margin-top: 0.25rem; }
+    .scan-card.passed .status { color: var(--success); }
+    .scan-card.failed .status { color: var(--danger); }
+    .scan-card.skipped .status { color: var(--text-light); }
+    .stride-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+    .stride-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 0.75rem; text-align: center; position: relative; overflow: hidden; }
+    .stride-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .stride-card.spoofing::before { background: var(--info); }
+    .stride-card.tampering::before { background: var(--high); }
+    .stride-card.repudiation::before { background: var(--text-light); }
+    .stride-card.info-disclosure::before { background: var(--critical); }
+    .stride-card.denial-of-service::before { background: var(--warning); }
+    .stride-card.elevation::before { background: var(--primary); }
+    .stride-icon { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+    .spoofing .stride-icon { background: var(--info); }
+    .tampering .stride-icon { background: var(--high); }
+    .repudiation .stride-icon { background: var(--text-light); }
+    .info-disclosure .stride-icon { background: var(--critical); }
+    .denial-of-service .stride-icon { background: var(--warning); }
+    .elevation .stride-icon { background: var(--primary); }
+    .stride-name { font-size: 0.75rem; font-weight: 600; margin-bottom: 0.15rem; }
+    .stride-count { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .stride-desc { font-size: 0.65rem; color: var(--text-light); }
+    .stride-detail { margin-bottom: 0.75rem; border: 1px solid var(--border-light); border-radius: var(--radius); }
+    .stride-detail summary { cursor: pointer; font-weight: 600; font-size: 0.95rem; padding: 0.65rem 1rem; background: var(--bg-secondary); border-radius: var(--radius); list-style: none; }
+    .stride-detail summary::-webkit-details-marker { display: none; }
+    .stride-threat { background: var(--bg-secondary); border-radius: var(--radius); padding: 0.75rem 1rem; margin: 0.5rem 1rem; border-left: 3px solid var(--border); }
+    .stride-threat .threat-asset { font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.25rem; }
+    .stride-threat .threat-title { font-weight: 600; font-size: 0.9rem; }
+    .stride-threat .threat-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
+    .countermeasure-badge { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.65rem; font-weight: 600; background: rgba(153,71,235,0.08); color: var(--primary); border: 1px solid rgba(153,71,235,0.2); }
+    .finding { background: var(--bg-secondary); border-radius: var(--radius); padding: 1rem; margin-bottom: 0.75rem; border-left: 4px solid var(--border); }
+    .finding.critical { border-left-color: var(--critical); }
+    .finding.high { border-left-color: var(--high); }
+    .finding.medium { border-left-color: var(--medium); }
+    .finding-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+    .finding-title { font-weight: 600; }
+    .finding-location { font-family: monospace; font-size: 0.75rem; background: var(--border-light); padding: 0.25rem 0.5rem; border-radius: 4px; margin: 0.5rem 0; border: 1px solid var(--border); display: inline-block; }
+    .severity { padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .severity-critical { background: rgba(220,53,69,0.12); color: var(--critical); }
+    .severity-high { background: rgba(192,86,33,0.12); color: var(--high); }
+    .severity-medium { background: rgba(207,148,12,0.12); color: var(--medium); }
+    .severity-low { background: rgba(0,170,132,0.12); color: var(--low); }
+    .cve-badge { font-family: monospace; font-size: 0.75rem; background: rgba(220,53,69,0.08); color: var(--critical); padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid rgba(220,53,69,0.2); margin-right: 0.3rem; }
+    .category-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; background: rgba(153,71,235,0.08); color: var(--primary); border: 1px solid rgba(153,71,235,0.2); }
+    .remediation-box { background: rgba(0,170,132,0.06); border: 1px solid rgba(0,170,132,0.2); border-radius: var(--radius); padding: 0.75rem; margin-top: 0.75rem; font-size: 0.85rem; }
+    .remediation-box strong { color: var(--success); }
+    .sprint-card { border: 2px solid var(--success); border-radius: var(--radius); padding: 1.5rem; margin: 1rem 0; background: var(--bg-secondary); }
+    .sprint-card h4 { color: var(--success); margin-top: 0; margin-bottom: 0.5rem; }
+    .sprint-card .sprint-meta { font-size: 0.85rem; color: var(--text-light); margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-light); }
+    .act-divider { text-align: center; padding: 1.5rem 0; margin: 1rem 0; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-light); border-top: 2px solid var(--border); }
+    .no-new-issues { background: rgba(0,170,132,0.08); border: 2px solid var(--success); border-radius: var(--radius); padding: 1.5rem; text-align: center; font-size: 1.1rem; color: var(--success); margin-bottom: 1.5rem; }
+    code { background: var(--border-light); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.85em; }
+    .footer { text-align: center; padding: 2rem 1rem; color: var(--text-light); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 1rem; }
+    .footer img { height: 24px; }
+    @media (max-width: 900px) { .sidebar { display: none; } .stride-grid { grid-template-columns: repeat(3,1fr); } .severity-grid { grid-template-columns: repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <div class="header-logo"><img src="https://agent.opsera.ai/opsera_logo_white_horizontal.png" alt="Opsera"></div>
+      <div class="header-text">
+        <h1>Security Scan Report</h1>
+        <div class="meta">GTM-Agent | Scan: full | Severity: high | 5/24/2026 | Opsera DevOps Agent</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <nav class="sidebar">
+      <div class="sidebar-nav">
+        <a class="sidebar-link" href="#executive-summary">Executive Summary</a>
+        <a class="sidebar-link" href="#risk-score">Risk Score &amp; Severity</a>
+        <a class="sidebar-link" href="#scan-coverage">Scan Coverage</a>
+        <a class="sidebar-link" href="#stride-analysis">STRIDE Threat Analysis</a>
+        <div class="sidebar-group-label">Findings</div>
+        <a class="sidebar-link sub" href="#findings-secrets">Secrets Detection</a>
+        <a class="sidebar-link sub" href="#findings-dependencies">Dependencies</a>
+        <a class="sidebar-link sub" href="#findings-sast">SAST</a>
+        <a class="sidebar-link sub" href="#findings-iac">Infrastructure as Code</a>
+        <a class="sidebar-link sub" href="#findings-container">Container</a>
+        <div class="sidebar-group-label">Remediation Roadmap</div>
+        <a class="sidebar-link sub" href="#quick-wins">Quick Wins</a>
+        <a class="sidebar-link sub" href="#fix-this-sprint">Fix This Sprint</a>
+        <a class="sidebar-link sub" href="#plan-next-quarter">Plan Next Quarter</a>
+      </div>
+      <div class="sidebar-footer">Generated by Opsera DevOps Agent</div>
+    </nav>
+
+    <div class="page-main">
+      <div class="container">
+
+      <div class="no-new-issues">
+        ✅ 0 NEW security findings from WO-017 changes &mdash; all 114 findings are pre-existing in the codebase.
+        <br><small>WO-017 (drive-connector) introduces no runtime dependencies.</small>
+      </div>
+
+      <div class="section" id="executive-summary">
+        <h2>Executive Summary</h2>
+        <table>
+          <thead><tr><th>Category</th><th>Critical</th><th>High</th><th>Medium</th><th>Low</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>Secrets (Gitleaks)</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+            <tr><td>Dependencies (Grype)</td><td>8</td><td>52</td><td>51</td><td>3</td><td>114</td></tr>
+            <tr><td>SAST (Semgrep)</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+            <tr><td>IaC (Checkov)</td><td>0</td><td>0</td><td>44</td><td>0</td><td>44</td></tr>
+            <tr><td>Container (Hadolint)</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+            <tr><td>NPM Audit</td><td>0</td><td>0</td><td>5</td><td>0</td><td>5</td></tr>
+            <tr><td><strong>TOTAL</strong></td><td><strong>8</strong></td><td><strong>52</strong></td><td><strong>100</strong></td><td><strong>3</strong></td><td><strong>163</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section" id="risk-score">
+        <h2>Risk Score &amp; Severity Breakdown</h2>
+        <div class="risk-score-container">
+          <div class="score-ring">
+            <svg width="180" height="180">
+              <circle class="bg" cx="90" cy="90" r="78"/>
+              <circle class="progress" cx="90" cy="90" r="78"
+                      stroke="#dc3545"
+                      stroke-dasharray="490"
+                      stroke-dashoffset="66"
+                      stroke-linecap="round"/>
+            </svg>
+            <div class="value">
+              <div class="percentage" style="color:#dc3545;">86.5</div>
+              <div class="label" style="color:#dc3545;font-weight:600;">Critical Risk</div>
+            </div>
+          </div>
+          <div>
+            <p><strong>Score Breakdown:</strong></p>
+            <p><code>min(100, round(log10((8&#215;100)+(52&#215;30)+(51&#215;10)+(3&#215;3)+1)&#215;25))</code></p>
+            <p><code>= min(100, round(log10(2880)&#215;25)) = 86.5</code></p>
+          </div>
+        </div>
+        <div class="severity-grid">
+          <div class="severity-card critical"><div class="count">8</div><div class="label">Critical</div></div>
+          <div class="severity-card high"><div class="count">52</div><div class="label">High</div></div>
+          <div class="severity-card medium"><div class="count">100</div><div class="label">Medium</div></div>
+          <div class="severity-card low"><div class="count">3</div><div class="label">Low</div></div>
+        </div>
+      </div>
+
+      <div class="section" id="scan-coverage">
+        <h2>Scan Coverage</h2>
+        <div class="scan-grid">
+          <div class="scan-card passed"><div class="icon">&#128273;</div><div class="name">Secrets</div><div class="status">&#10003; Passed &mdash; 0 findings</div></div>
+          <div class="scan-card failed"><div class="icon">&#128230;</div><div class="name">Dependencies</div><div class="status">&#9888; 114 findings (pre-existing)</div></div>
+          <div class="scan-card passed"><div class="icon">&#128269;</div><div class="name">SAST</div><div class="status">&#10003; Passed &mdash; 0 findings</div></div>
+          <div class="scan-card failed"><div class="icon">&#127959;</div><div class="name">IaC</div><div class="status">&#9888; 44 checks (pre-existing)</div></div>
+          <div class="scan-card passed"><div class="icon">&#128051;</div><div class="name">Container</div><div class="status">&#10003; No Dockerfiles</div></div>
+          <div class="scan-card passed"><div class="icon">&#128230;</div><div class="name">NPM Audit</div><div class="status">&#10003; 0 High/Critical</div></div>
+          <div class="scan-card skipped"><div class="icon">&#128202;</div><div class="name">SonarQube</div><div class="status">&#8613; Not configured</div></div>
+        </div>
+      </div>
+
+      <div class="section" id="stride-analysis">
+        <h2>STRIDE Threat Analysis</h2>
+        <p style="font-size:0.9rem;color:var(--text-light);margin-bottom:1.25rem;">Scan findings classified by Microsoft STRIDE. All findings are pre-existing.</p>
+        <div class="stride-grid">
+          <div class="stride-card spoofing">
+            <div class="stride-icon">S</div><div class="stride-name">Spoofing</div>
+            <div class="stride-count">5</div><div class="stride-desc">Authentication threats</div>
+          </div>
+          <div class="stride-card tampering">
+            <div class="stride-icon">T</div><div class="stride-name">Tampering</div>
+            <div class="stride-count">35</div><div class="stride-desc">Integrity threats</div>
+          </div>
+          <div class="stride-card repudiation">
+            <div class="stride-icon">R</div><div class="stride-name">Repudiation</div>
+            <div class="stride-count">6</div><div class="stride-desc">Non-repudiation threats</div>
+          </div>
+          <div class="stride-card info-disclosure">
+            <div class="stride-icon">I</div><div class="stride-name">Info Disclosure</div>
+            <div class="stride-count">28</div><div class="stride-desc">Confidentiality threats</div>
+          </div>
+          <div class="stride-card denial-of-service">
+            <div class="stride-icon">D</div><div class="stride-name">Denial of Service</div>
+            <div class="stride-count">15</div><div class="stride-desc">Availability threats</div>
+          </div>
+          <div class="stride-card elevation">
+            <div class="stride-icon">E</div><div class="stride-name">Elevation</div>
+            <div class="stride-count">23</div><div class="stride-desc">Authorization threats</div>
+          </div>
+        </div>
+
+        <details class="stride-detail">
+          <summary>S &mdash; Spoofing (5 threats)</summary>
+          <div class="stride-threat">
+            <div class="threat-asset">Asset: HTTP server (net/http)</div>
+            <div class="threat-title">CVE-2025-22871 &mdash; HTTP request smuggling via bare LF</div>
+            <p>Allows spoofed HTTP requests to bypass frontend proxies by exploiting chunked encoding.</p>
+            <div class="threat-controls">
+              <span class="severity severity-critical">Critical</span>
+              <span class="countermeasure-badge">Fix: Upgrade Go to 1.24.x</span>
+            </div>
+          </div>
+          <div class="stride-threat">
+            <div class="threat-asset">Asset: gRPC authorization</div>
+            <div class="threat-title">GHSA-p77j-4mvh-x3m3 &mdash; gRPC auth bypass</div>
+            <p>Missing leading slash in :path bypasses authorization interceptors.</p>
+            <div class="threat-controls">
+              <span class="severity severity-critical">Critical</span>
+              <span class="countermeasure-badge">Fix: Upgrade grpc-go or add path validation</span>
+            </div>
+          </div>
+        </details>
+
+        <details class="stride-detail">
+          <summary>I &mdash; Information Disclosure (28 threats)</summary>
+          <div class="stride-threat">
+            <div class="threat-asset">Asset: Network address classification</div>
+            <div class="threat-title">CVE-2024-24790 &mdash; IPv4-mapped IPv6 misclassification</div>
+            <p>IsPrivate/IsLoopback return incorrect results; security ACLs may be bypassed.</p>
+            <div class="threat-controls">
+              <span class="severity severity-critical">Critical</span>
+              <span class="countermeasure-badge">Fix: Upgrade Go stdlib</span>
+            </div>
+          </div>
+          <div class="stride-threat">
+            <div class="threat-asset">Asset: TLS sessions</div>
+            <div class="threat-title">CVE-2025-68121 &mdash; TLS session resumption with stale CA config</div>
+            <p>Resumed sessions may use outdated CA config, potentially allowing untrusted certs.</p>
+            <div class="threat-controls">
+              <span class="severity severity-critical">Critical</span>
+              <span class="countermeasure-badge">Fix: Upgrade Go to 1.24.x</span>
+            </div>
+          </div>
+          <div class="stride-threat">
+            <div class="threat-asset">Asset: GCP Artifact Registry</div>
+            <div class="threat-title">CKV_GCP_84 &mdash; Missing CSEK encryption</div>
+            <p>Artifacts stored without customer-managed encryption keys.</p>
+            <div class="threat-controls">
+              <span class="severity severity-medium">Medium</span>
+              <span class="countermeasure-badge">Fix: Configure CSEK in terraform</span>
+            </div>
+          </div>
+        </details>
+
+        <details class="stride-detail">
+          <summary>D &mdash; Denial of Service (15 threats)</summary>
+          <div class="stride-threat">
+            <div class="threat-asset">Asset: HTTP/2 server</div>
+            <div class="threat-title">CVE-2023-45288 &mdash; HTTP/2 header flood DoS</div>
+            <p>Unlimited CONTINUATION frames can exhaust server memory.</p>
+            <div class="threat-controls">
+              <span class="severity severity-high">High</span>
+              <span class="countermeasure-badge">Fix: Upgrade Go to 1.21.9+</span>
+            </div>
+          </div>
+          <div class="stride-threat">
+            <div class="threat-asset">Asset: encoding/gob decoder</div>
+            <div class="threat-title">CVE-2024-34156 &mdash; Stack overflow in gob decoder</div>
+            <p>Deeply nested gob messages cause stack exhaustion, crashing the service.</p>
+            <div class="threat-controls">
+              <span class="severity severity-high">High</span>
+              <span class="countermeasure-badge">Fix: Upgrade Go stdlib</span>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="section" id="findings-secrets">
+        <h2>Secrets Detection</h2>
+        <div style="background:rgba(0,170,132,0.08);border:1px solid var(--success);border-radius:var(--radius);padding:1rem;color:var(--success);font-weight:600;">
+          &#10003; No secrets detected &mdash; gitleaks scan clean across entire repository.
+        </div>
+      </div>
+
+      <div class="section" id="findings-dependencies">
+        <h2>Dependency Vulnerabilities</h2>
+        <p style="font-size:0.9rem;color:var(--text-light);margin-bottom:1rem;">All 114 findings are pre-existing. WO-017 introduces 0 new runtime dependencies.</p>
+
+        <div class="finding critical">
+          <div class="finding-header">
+            <span class="finding-title">stdlib@go1.20.12</span>
+            <span class="severity severity-critical">Critical</span>
+          </div>
+          <span class="cve-badge">CVE-2025-22871</span><span class="category-badge">Go stdlib</span>
+          <p>net/http accepts bare LF in chunked data &mdash; HTTP request smuggling.</p>
+          <div class="remediation-box"><strong>Fix:</strong> Upgrade Go toolchain to &ge; 1.24.x.</div>
+        </div>
+
+        <div class="finding critical">
+          <div class="finding-header">
+            <span class="finding-title">google.golang.org/grpc@v1.74.2</span>
+            <span class="severity severity-critical">Critical</span>
+          </div>
+          <span class="cve-badge">GHSA-p77j-4mvh-x3m3</span><span class="category-badge">Go module</span>
+          <p>Authorization bypass via missing leading slash in gRPC :path header.</p>
+          <div class="remediation-box"><strong>Fix:</strong> Upgrade grpc-go or add explicit path validation middleware.</div>
+        </div>
+
+        <div class="finding critical">
+          <div class="finding-header">
+            <span class="finding-title">stdlib@go1.20.12 &amp; go1.23.12</span>
+            <span class="severity severity-critical">Critical</span>
+          </div>
+          <span class="cve-badge">CVE-2026-27143</span><span class="category-badge">Go stdlib</span>
+          <p>Integer arithmetic overflow on loop induction variables; may cause out-of-bounds memory access.</p>
+          <div class="remediation-box"><strong>Fix:</strong> Upgrade Go toolchain to &ge; 1.24.x.</div>
+        </div>
+
+        <div class="finding critical">
+          <div class="finding-header">
+            <span class="finding-title">stdlib@go1.20.12 &amp; go1.23.12</span>
+            <span class="severity severity-critical">Critical</span>
+          </div>
+          <span class="cve-badge">CVE-2025-68121</span><span class="category-badge">Go stdlib</span>
+          <p>TLS session resumption doesn't invalidate sessions when ClientCAs/RootCAs change.</p>
+          <div class="remediation-box"><strong>Fix:</strong> Upgrade Go toolchain to &ge; 1.24.x.</div>
+        </div>
+
+        <div class="finding high">
+          <div class="finding-header">
+            <span class="finding-title">stdlib@go1.20.12</span>
+            <span class="severity severity-high">High</span>
+          </div>
+          <span class="cve-badge">CVE-2023-45288</span><span class="category-badge">Go stdlib</span>
+          <p>HTTP/2: unlimited CONTINUATION frames allow memory exhaustion DoS.</p>
+          <div class="remediation-box"><strong>Fix:</strong> Upgrade Go to &ge; 1.21.9.</div>
+        </div>
+
+        <div class="finding high">
+          <div class="finding-header">
+            <span class="finding-title">stdlib@go1.20.12</span>
+            <span class="severity severity-high">High</span>
+          </div>
+          <span class="cve-badge">CVE-2024-34156</span><span class="category-badge">Go stdlib</span>
+          <p>encoding/gob: deeply nested messages cause stack overflow in decoder.</p>
+          <div class="remediation-box"><strong>Fix:</strong> Upgrade Go stdlib.</div>
+        </div>
+
+        <div class="finding high">
+          <div class="finding-header">
+            <span class="finding-title">go.opentelemetry.io/otel@v1.36.0</span>
+            <span class="severity severity-high">High</span>
+          </div>
+          <span class="cve-badge">GHSA-mh2q-q3fh-2475</span><span class="category-badge">Go module</span>
+          <p>OTel SDK metric handling vulnerability.</p>
+          <div class="remediation-box"><strong>Fix:</strong> Upgrade otel to latest patched version.</div>
+        </div>
+
+        <p style="font-size:0.85rem;color:var(--text-light);margin-top:1rem;">+ 45 more High, 51 Medium, 3 Low findings &mdash; primarily from Go stdlib@1.20.12. Primary remediation: upgrade Go toolchain across all services.</p>
+      </div>
+
+      <div class="section" id="findings-sast">
+        <h2>Static Analysis (SAST)</h2>
+        <div style="background:rgba(0,170,132,0.08);border:1px solid var(--success);border-radius:var(--radius);padding:1rem;color:var(--success);font-weight:600;">
+          &#10003; Semgrep: No issues found across entire codebase.
+        </div>
+      </div>
+
+      <div class="section" id="findings-iac">
+        <h2>Infrastructure as Code</h2>
+        <p style="font-size:0.9rem;color:var(--text-light);margin-bottom:1rem;">44 pre-existing Checkov findings in <code>infra/terraform/</code> and <code>deploy/charts/</code>. None introduced by WO-017.</p>
+
+        <div class="finding medium">
+          <div class="finding-header">
+            <span class="finding-title">CKV_GCP_84 &mdash; Artifact Registry missing CSEK encryption</span>
+            <span class="severity severity-medium">Medium</span>
+          </div>
+          <div class="finding-location">infra/terraform/modules/artifact-registry/main.tf</div>
+          <p>Artifact Registry not configured with Customer-Supplied Encryption Keys.</p>
+          <div class="remediation-box"><strong>Fix:</strong> Add <code>kms_key_name</code> to google_artifact_registry_repository resource.</div>
+        </div>
+
+        <div class="finding medium">
+          <div class="finding-header">
+            <span class="finding-title">CKV_GCP_110 &mdash; pgAudit not enabled for Cloud SQL</span>
+            <span class="severity severity-medium">Medium</span>
+          </div>
+          <div class="finding-location">infra/terraform/modules/cloud-sql/main.tf</div>
+          <p>PostgreSQL audit logging (pgAudit) not enabled.</p>
+          <div class="remediation-box"><strong>Fix:</strong> Add <code>pgaudit.log = all</code> to Cloud SQL database flags.</div>
+        </div>
+
+        <div class="finding medium">
+          <div class="finding-header">
+            <span class="finding-title">CKV_K8S_43 &mdash; Container image not pinned to digest</span>
+            <span class="severity severity-medium">Medium</span>
+          </div>
+          <div class="finding-location">deploy/charts/api-service/templates/deployment.yaml</div>
+          <p>Using mutable image tags risks supply chain compromise.</p>
+          <div class="remediation-box"><strong>Fix:</strong> Use <code>image: registry/repo@sha256:...</code> in Helm values.</div>
+        </div>
+      </div>
+
+      <div class="section" id="findings-container">
+        <h2>Container &amp; Dockerfile</h2>
+        <div style="background:rgba(0,170,132,0.08);border:1px solid var(--success);border-radius:var(--radius);padding:1rem;color:var(--success);font-weight:600;">
+          &#10003; No Dockerfiles found &mdash; hadolint scan not applicable.
+        </div>
+      </div>
+
+      <div class="act-divider">Remediation Roadmap</div>
+
+      <div class="section" id="quick-wins">
+        <h2>Quick Wins &mdash; Fix Today</h2>
+        <div class="sprint-card">
+          <h4>Sprint: 3 fixes, ~60 minutes total</h4>
+          <div class="sprint-meta">High-impact changes that resolve the majority of CVE findings.</div>
+          <ol>
+            <li><strong>Upgrade Go toolchain</strong> from 1.20.12 &rarr; 1.24.x (~30 min) &mdash; resolves ~60 pre-existing CVEs</li>
+            <li><strong>Pin container image digests</strong> in Helm charts (~15 min) &mdash; fixes CKV_K8S_43</li>
+            <li><strong>Add Kubernetes namespace</strong> to chart templates (~15 min) &mdash; fixes CKV_K8S_21</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="section" id="fix-this-sprint">
+        <h2>Fix This Sprint</h2>
+        <table>
+          <thead><tr><th>Priority</th><th>Finding</th><th>Action</th><th>Effort</th></tr></thead>
+          <tbody>
+            <tr><td>P1</td><td>Go stdlib Critical CVEs (&times;8)</td><td>Upgrade Go toolchain to 1.24.x</td><td>2h</td></tr>
+            <tr><td>P1</td><td>GHSA-p77j-4mvh-x3m3 gRPC auth bypass</td><td>Upgrade grpc-go or add path validation</td><td>4h</td></tr>
+            <tr><td>P2</td><td>CVE-2025-68121 TLS session resumption</td><td>Upgrade Go toolchain</td><td>1h</td></tr>
+            <tr><td>P2</td><td>CKV_GCP_110 pgAudit</td><td>Enable pgAudit in Cloud SQL terraform</td><td>1h</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section" id="plan-next-quarter">
+        <h2>Plan For Next Quarter</h2>
+        <table>
+          <thead><tr><th>Priority</th><th>Finding</th><th>Action</th><th>Effort</th><th>Prerequisites</th></tr></thead>
+          <tbody>
+            <tr><td>P2</td><td>CKV_GCP_84 CSEK encryption</td><td>Configure CSEK for Artifact Registry</td><td>1 sprint</td><td>Security team approval</td></tr>
+            <tr><td>P2</td><td>logrus GHSA-4f99-4q7p-p3gh</td><td>Upgrade to logrus v1.9.x</td><td>2h</td><td>Go upgrade first</td></tr>
+            <tr><td>P3</td><td>Remaining 40 Checkov IaC checks</td><td>Remediate terraform + helm findings</td><td>2 sprints</td><td>Infra team review</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      </div>
+      <div class="footer">
+        <img src="https://agent.opsera.ai/opsera_logo_transparent.png" alt="Opsera"><br>
+        Generated by Opsera DevOps Agent | Security Scan | GTM-Agent | 5/24/2026
+      </div>
+    </div>
+  </div>
+</body>
+</html>
