@@ -24,7 +24,8 @@ infra/terraform/
 │   ├── state-backend/         # GCS state bucket (versioned, locked, private)
 │   ├── gke/                   # private regional GKE cluster, autoscaling node pools, Workload Identity (WO-002)
 │   ├── cloud-sql/             # private Cloud SQL PostgreSQL + pgvector, read replica, backups/PITR, Secret Manager creds (WO-003)
-│   └── redis/                 # private Memorystore Redis (STANDARD_HA, AUTH+TLS), env-sized, Secret Manager creds (WO-004)
+│   ├── redis/                 # private Memorystore Redis (STANDARD_HA, AUTH+TLS), env-sized, Secret Manager creds (WO-004)
+│   └── cloud-tasks/           # async processing queues (file/embedding/insight) + DLQ, retry/rate limits, enqueuer IAM (WO-005)
 ├── backend.tf                 # gcs backend (bucket supplied at init time)
 ├── main.tf                    # composes the modules
 ├── variables.tf / outputs.tf
