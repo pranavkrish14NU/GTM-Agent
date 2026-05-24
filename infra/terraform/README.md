@@ -21,7 +21,8 @@ infra/terraform/
 │   ├── networking/            # VPC, subnets, NAT, firewall, Private Service Access
 │   ├── iam/                   # api-gateway / worker-pods / ci-cd-deployer service accounts
 │   ├── project-services/      # enables required GCP APIs
-│   └── state-backend/         # GCS state bucket (versioned, locked, private)
+│   ├── state-backend/         # GCS state bucket (versioned, locked, private)
+│   └── gke/                   # private regional GKE cluster, autoscaling node pools, Workload Identity (WO-002)
 ├── backend.tf                 # gcs backend (bucket supplied at init time)
 ├── main.tf                    # composes the modules
 ├── variables.tf / outputs.tf
@@ -93,3 +94,21 @@ terraform validate   # run inside each module / the root after `terraform init`
 | IAM SAs: api-gateway, worker-pods, ci-cd-deployer | `modules/iam` |
 | GCS state bucket with versioning + locking | `modules/state-backend` + `bootstrap` + `backend.tf` |
 | Validated via `terraform validate` / `test` | `modules/**/tests/*.tftest.hcl` |
+
+## WO-002 — GKE cluster
+
+`modules/gke` provisions a private, regional, VPC-native GKE cluster wired into
+WO-001's VPC and IAM:
+
+| Criterion | Where |
+|-----------|-------|
+| Private cluster, no public endpoint | `private_cluster_config` (`enable_private_endpoint = true`) |
+| Two node pools: general (e2-standard-4, 2-10) + worker (e2-highmem-4, 2-20) | `google_container_node_pool.general` / `.worker` |
+| Cluster autoscaler on both pools | `autoscaling { total_min/total_max }` |
+| Workload Identity + KSA→GSA mapping | `workload_identity_config` + `google_service_account_iam_member.workload_identity` |
+| Network policy enforcement | Dataplane V2 (`datapath_provider = "ADVANCED_DATAPATH"`) |
+| Authorized networks = CI/CD only | `gke_master_authorized_networks` (per-env tfvars) |
+
+> Nodes run as WO-001's `worker-pods` service account. Because the control
+> plane has no public endpoint, CI/CD must reach it from within the VPC (set
+> `gke_master_authorized_networks` to in-VPC/CI ranges).

@@ -48,3 +48,27 @@ module "iam" {
 
   depends_on = [module.project_services]
 }
+
+module "gke" {
+  source = "./modules/gke"
+
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+
+  # Consume the VPC, app subnet, and GKE secondary ranges from WO-001.
+  network             = module.networking.network_self_link
+  subnetwork          = module.networking.app_subnet_self_link
+  pods_range_name     = module.networking.pods_secondary_range_name
+  services_range_name = module.networking.services_secondary_range_name
+
+  # Nodes run as the worker-pods service account from WO-001 (least privilege).
+  node_service_account = module.iam.worker_pods_sa_email
+
+  master_ipv4_cidr           = var.gke_master_ipv4_cidr
+  enable_private_endpoint    = var.gke_enable_private_endpoint
+  master_authorized_networks = var.gke_master_authorized_networks
+  deletion_protection        = var.gke_deletion_protection
+
+  depends_on = [module.project_services, module.networking, module.iam]
+}
