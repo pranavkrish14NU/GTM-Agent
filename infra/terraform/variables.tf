@@ -90,3 +90,10 @@ variable "cloud_sql_deletion_protection" {
   type        = bool
   default     = true
 }
+
+# --- Redis (WO-004) ---
+variable "redis_memory_size_gb" {
+  description = "Memorystore Redis memory size in GB (dev 1, staging 2, production 4)."
+  type        = number
+  default     = 4
+}
