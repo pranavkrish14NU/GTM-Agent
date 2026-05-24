@@ -65,8 +65,9 @@ export function createPersonaRouter(
     jwtGuard,
     requireRole('viewer'),
     async (req: Request, res: Response): Promise<void> => {
+      const { id } = req.params as { id: string };
       try {
-        const persona = await personaService.getPersona(req.user!.workspace_id, req.params['id']!);
+        const persona = await personaService.getPersona(req.user!.workspace_id, id);
         if (!persona) {
           res.status(404).json({ error: 'Persona not found. Run POST /v1/personas/generate first.' });
           return;
