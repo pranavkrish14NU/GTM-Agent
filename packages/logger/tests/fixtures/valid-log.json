@@ -1,0 +1,10 @@
+{
+  "_comment": "Reference fixture: expected shape of a structured log line from @boba/logger.",
+  "time": "2026-05-24T00:00:00.000Z",
+  "level": "info",
+  "service": "api",
+  "message": "User logged in",
+  "workspace_id": "ws_abc123",
+  "user_id": "u_xyz789",
+  "request_id": "550e8400-e29b-41d4-a716-446655440000"
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@boba/logger",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared structured JSON logger for BOBA backend services. Outputs pino JSON with workspace_id, user_id, request_id.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --reporter=verbose",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pino": "^9.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

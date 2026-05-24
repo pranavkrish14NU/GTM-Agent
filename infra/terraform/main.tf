@@ -166,3 +166,13 @@ module "secrets_kms" {
 
   depends_on = [module.project_services, module.iam]
 }
+
+module "logging" {
+  source = "./modules/logging"
+
+  project_id  = var.project_id
+  environment = var.environment
+  region      = var.region
+
+  depends_on = [module.project_services]
+}
