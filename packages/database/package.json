@@ -1,0 +1,36 @@
+{
+  "name": "@boba/database",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Database migration framework and schema for BOBA (PostgreSQL + pgvector).",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "migrate:up": "node-pg-migrate up -m migrations --migrations-schema public --no-lock",
+    "migrate:down": "node-pg-migrate down -m migrations --migrations-schema public --no-lock",
+    "migrate:create": "node-pg-migrate create -m migrations",
+    "seed:dev": "node --import tsx/esm seed/development.ts",
+    "test": "vitest run --reporter=verbose",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "node-pg-migrate": "^8.0.4",
+    "pg": "^8.13.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

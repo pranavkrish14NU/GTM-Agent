@@ -2,7 +2,7 @@
   "name": "boba",
   "version": "0.0.0",
   "private": true,
-  "description": "BOBA — AI-powered GTM command center (monorepo root)",
+  "description": "BOBA â€” AI-powered GTM command center (monorepo root)",
   "license": "MIT",
   "engines": {
     "node": ">=20"
