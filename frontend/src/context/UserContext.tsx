@@ -1,3 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
+// Context files conventionally export the context object, provider component,
+// and consumer hook from a single file — this is intentional and by design.
+
 /**
  * UserContext — makes the current authenticated user available anywhere in the
  * component tree without prop-drilling.
