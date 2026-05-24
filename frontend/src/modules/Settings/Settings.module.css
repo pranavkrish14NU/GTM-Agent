@@ -1,0 +1,195 @@
+/* ==========================================================================
+   Admin Settings — tabbed interface: Connections, Folders, Users, Audit, Sync
+   ========================================================================== */
+
+.page { padding: 1.5rem; max-width: 1280px; margin: 0 auto; }
+
+.pageHeader { margin-bottom: 1.5rem; }
+.pageTitle { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0; }
+.pageSubtitle { font-size: 0.875rem; color: #64748b; margin: 0.25rem 0 0; }
+
+.errorBanner { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 0.5rem; padding: 1rem 1.25rem; color: #991b1b; font-size: 0.875rem; margin-bottom: 1.5rem; }
+
+.successBanner { background: #f0fdf4; border: 1px solid #86efac; border-radius: 0.5rem; padding: 1rem 1.25rem; color: #166534; font-size: 0.875rem; margin-bottom: 1.5rem; }
+
+/* --------------------------------------------------------------------------
+   Tabs
+   -------------------------------------------------------------------------- */
+
+.tabBar {
+  display: flex; gap: 0; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+
+.tab {
+  padding: 0.625rem 1rem; font-size: 0.875rem; font-weight: 500;
+  color: #64748b; background: none; border: none; border-bottom: 2px solid transparent;
+  cursor: pointer; white-space: nowrap; margin-bottom: -2px;
+}
+.tab:hover { color: #0f172a; }
+.tab.active { color: #6366f1; border-bottom-color: #6366f1; }
+
+/* --------------------------------------------------------------------------
+   Section title inside tab content
+   -------------------------------------------------------------------------- */
+
+.sectionTitle { font-size: 0.9375rem; font-weight: 600; color: #0f172a; margin: 0 0 1rem; }
+
+/* --------------------------------------------------------------------------
+   Connections tab
+   -------------------------------------------------------------------------- */
+
+.connectionList { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.connectionCard {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem;
+  padding: 1rem 1.25rem; gap: 1rem; flex-wrap: wrap;
+}
+
+.connectionInfo { display: flex; flex-direction: column; gap: 0.25rem; }
+.connectionEmail { font-size: 0.9375rem; font-weight: 600; color: #0f172a; }
+.connectionMeta { font-size: 0.75rem; color: #94a3b8; }
+
+.connectionStatus { display: flex; align-items: center; gap: 0.375rem; }
+.statusDot { width: 8px; height: 8px; border-radius: 9999px; flex-shrink: 0; }
+.statusDot.connected    { background: #22c55e; }
+.statusDot.disconnected { background: #94a3b8; }
+.statusDot.syncing      { background: #f59e0b; }
+.statusDot.error        { background: #ef4444; }
+.statusLabel { font-size: 0.8125rem; font-weight: 500; color: #475569; }
+
+.connectionActions { display: flex; gap: 0.5rem; }
+
+.btnSecondary {
+  padding: 0.375rem 0.75rem; font-size: 0.8125rem; font-weight: 500;
+  color: #475569; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem;
+  cursor: pointer;
+}
+.btnSecondary:hover { background: #f1f5f9; }
+
+.btnDanger {
+  padding: 0.375rem 0.75rem; font-size: 0.8125rem; font-weight: 500;
+  color: #991b1b; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 0.375rem;
+  cursor: pointer;
+}
+.btnDanger:hover { background: #fee2e2; }
+
+.btnPrimary {
+  display: inline-flex; align-items: center; gap: 0.375rem;
+  padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500;
+  color: #ffffff; background: #6366f1; border: none; border-radius: 0.375rem;
+  cursor: pointer;
+}
+.btnPrimary:hover:not(:disabled) { background: #4f46e5; }
+.btnPrimary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* --------------------------------------------------------------------------
+   Folder mapping tab
+   -------------------------------------------------------------------------- */
+
+.folderList { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.folderRow {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.5rem;
+  padding: 0.75rem 1rem; gap: 1rem; flex-wrap: wrap;
+}
+
+.folderName { font-size: 0.875rem; font-weight: 500; color: #0f172a; flex: 1; min-width: 120px; }
+
+.folderSelect {
+  padding: 0.375rem 0.625rem; font-size: 0.8125rem; color: #0f172a;
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem;
+  cursor: pointer; min-width: 180px; font-family: inherit;
+}
+.folderSelect:focus { outline: none; border-color: #6366f1; background: #ffffff; }
+
+/* --------------------------------------------------------------------------
+   Users tab
+   -------------------------------------------------------------------------- */
+
+.userList { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.userRow {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.5rem;
+  padding: 0.75rem 1rem; gap: 1rem; flex-wrap: wrap;
+}
+
+.userInfo { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 160px; }
+.userAvatar {
+  width: 36px; height: 36px; border-radius: 9999px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.875rem; font-weight: 700; color: #ffffff; flex-shrink: 0;
+}
+.userName { font-size: 0.875rem; font-weight: 600; color: #0f172a; }
+.userEmail { font-size: 0.75rem; color: #94a3b8; }
+
+.roleSelect {
+  padding: 0.375rem 0.625rem; font-size: 0.8125rem; color: #0f172a;
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem;
+  cursor: pointer; font-family: inherit;
+}
+.roleSelect:focus { outline: none; border-color: #6366f1; background: #ffffff; }
+.roleSelect:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* --------------------------------------------------------------------------
+   Audit logs tab
+   -------------------------------------------------------------------------- */
+
+.auditFilters { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+
+.auditSearch {
+  padding: 0.4375rem 0.75rem; font-size: 0.875rem; color: #0f172a;
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem;
+  font-family: inherit; flex: 1; min-width: 200px;
+}
+.auditSearch:focus { outline: none; border-color: #6366f1; background: #ffffff; }
+
+.auditList { display: flex; flex-direction: column; gap: 0.375rem; }
+
+.auditRow {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.auditIcon { font-size: 1rem; flex-shrink: 0; margin-top: 0.125rem; }
+.auditBody { flex: 1; min-width: 0; }
+.auditDescription { font-size: 0.875rem; color: #0f172a; line-height: 1.5; }
+.auditMeta { font-size: 0.75rem; color: #94a3b8; margin-top: 0.125rem; }
+
+.auditPagination { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-top: 1rem; }
+.pageBtn { padding: 0.375rem 0.75rem; font-size: 0.8125rem; font-weight: 500; color: #475569; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; cursor: pointer; }
+.pageBtn:hover:not(:disabled) { background: #f1f5f9; }
+.pageBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pageInfo { font-size: 0.75rem; color: #94a3b8; }
+
+/* --------------------------------------------------------------------------
+   Sync tab
+   -------------------------------------------------------------------------- */
+
+.syncPanel {
+  background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem;
+  padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;
+}
+
+.syncStatus { display: flex; align-items: center; gap: 0.75rem; }
+.syncStatusLabel { font-size: 0.875rem; font-weight: 600; color: #0f172a; }
+.syncStatusValue { font-size: 0.875rem; color: #64748b; }
+.syncRunning { display: flex; align-items: center; gap: 0.375rem; font-size: 0.875rem; color: #f59e0b; font-weight: 500; }
+.syncSpinner { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.syncRow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.syncRowLabel { font-size: 0.875rem; font-weight: 500; color: #0f172a; min-width: 120px; }
+
+.frequencySelect {
+  padding: 0.4375rem 0.75rem; font-size: 0.875rem; color: #0f172a;
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem;
+  cursor: pointer; font-family: inherit;
+}
+.frequencySelect:focus { outline: none; border-color: #6366f1; background: #ffffff; }
+
+.syncDivider { border: none; border-top: 1px solid #f1f5f9; margin: 0; }
