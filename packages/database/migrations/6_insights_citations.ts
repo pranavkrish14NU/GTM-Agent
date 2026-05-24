@@ -24,7 +24,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     sources: {
       type: 'jsonb',
       notNull: true,
-      default: "'[]'::jsonb",
+      default: pgm.func("'[]'::jsonb"),
     },
   });
 
@@ -42,7 +42,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     confidence_level: {
       type: 'varchar(10)',
       notNull: true,
-      default: "'low'",
+      default: 'low',
     },
   });
 

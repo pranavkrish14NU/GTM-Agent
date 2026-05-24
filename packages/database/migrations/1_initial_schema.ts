@@ -34,7 +34,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
       default: pgm.func('gen_random_uuid()'),
     },
     name: { type: 'varchar(255)', notNull: true },
-    plan: { type: 'varchar(50)', notNull: true, default: "'starter'" },
+    plan: { type: 'varchar(50)', notNull: true, default: 'starter' },
     created_at: {
       type: 'timestamptz',
       notNull: true,
@@ -65,7 +65,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
       // RBAC roles: owner | admin | member | viewer  (AC-011 §Auth)
       type: 'varchar(20)',
       notNull: true,
-      default: "'member'",
+      default: 'member',
     },
     created_at: {
       type: 'timestamptz',
@@ -106,7 +106,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     // Tokens are encrypted with a workspace-specific KMS key before storage.
     access_token_enc: { type: 'text', notNull: true },
     refresh_token_enc: { type: 'text', notNull: true },
-    scopes: { type: 'text[]', notNull: true, default: "'{}'::text[]" },
+    scopes: { type: 'text[]', notNull: true, default: pgm.func("'{}'::text[]") },
     expires_at: { type: 'timestamptz' },
     created_at: {
       type: 'timestamptz',
@@ -188,7 +188,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     // 1536-dimension OpenAI ada-002-compatible embedding (vector from pgvector).
     embedding: { type: 'vector(1536)', notNull: true },
     // JSONB bag for token count, page number, section heading, etc.
-    metadata: { type: 'jsonb', notNull: true, default: "'{}'::jsonb" },
+    metadata: { type: 'jsonb', notNull: true, default: pgm.func("'{}'::jsonb") },
     created_at: {
       type: 'timestamptz',
       notNull: true,
@@ -251,7 +251,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     // e.g. "brand_voice", "competitor", "persona", "win_loss", "campaign"
     type: { type: 'varchar(50)', notNull: true },
     // Full insight payload (score, evidence, recommendations, citations).
-    payload: { type: 'jsonb', notNull: true, default: "'{}'::jsonb" },
+    payload: { type: 'jsonb', notNull: true, default: pgm.func("'{}'::jsonb") },
     created_at: {
       type: 'timestamptz',
       notNull: true,
@@ -284,9 +284,9 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
       onDelete: 'CASCADE',
     },
     title: { type: 'text', notNull: true },
-    body: { type: 'text', notNull: true, default: "''" },
+    body: { type: 'text', notNull: true, default: '' },
     // draft | in_review | approved | exported
-    status: { type: 'varchar(20)', notNull: true, default: "'draft'" },
+    status: { type: 'varchar(20)', notNull: true, default: 'draft' },
     // Exported Google Drive file ID (null until exported).
     drive_file_id: { type: 'varchar(255)' },
     created_at: {

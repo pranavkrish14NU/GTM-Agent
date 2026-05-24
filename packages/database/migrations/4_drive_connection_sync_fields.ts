@@ -31,12 +31,12 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     folder_mappings: {
       type: 'jsonb',
       notNull: true,
-      default: "'{}'::jsonb",
+      default: pgm.func("'{}'::jsonb"),
     },
     sync_status: {
       type: 'varchar(20)',
       notNull: true,
-      default: "'never'",
+      default: 'never',
     },
     files_indexed: {
       type: 'integer',

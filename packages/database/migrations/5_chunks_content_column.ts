@@ -31,7 +31,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     content: {
       type: 'text',
       notNull: true,
-      default: "''",
+      default: '',
     },
   });
 

@@ -66,12 +66,15 @@ export function createApp(pool: pg.Pool) {
   // Security headers on every response — must be first middleware.
   app.use(securityHeaders());
 
-  // CSRF protection — double-submit cookie for cookie-reliant endpoints.
-  app.use(csrfProtection());
-
+  // Body + cookie parsing must run BEFORE csrfProtection, which reads
+  // req.cookies for the double-submit token (otherwise req.cookies is
+  // undefined and every request throws).
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
   app.use(cookieParser());
+
+  // CSRF protection — double-submit cookie for cookie-reliant endpoints.
+  app.use(csrfProtection());
 
   // Per-user rate limiting — 100 req/min on all /v1/* routes.
   // LLM-powered routes apply an additional 10 req/min limit (see routes).
