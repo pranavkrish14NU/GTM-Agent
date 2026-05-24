@@ -23,9 +23,6 @@ export function Layout() {
 
       <div className={styles.main}>
         <Header
-          workspaceName="Acme Corp GTM"
-          userName="Maya Chen"
-          driveStatus="connected"
           onMobileMenuToggle={() => setMobileMenuOpen((v) => !v)}
         />
         <main className={styles.content} id="main-content" tabIndex={-1}>
