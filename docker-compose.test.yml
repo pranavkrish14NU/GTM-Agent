@@ -1,0 +1,46 @@
+##
+# Docker Compose for integration test environment.
+#
+# Services:
+#   - postgres-test: PostgreSQL 16 with pgvector extension (test database)
+#   - redis-test:    Redis 7 (session/cache for future use)
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml up -d
+#   npm --prefix backend/api run test:integration
+#   docker compose -f docker-compose.test.yml down -v
+##
+
+name: boba-test
+
+services:
+  postgres-test:
+    image: pgvector/pgvector:pg16
+    container_name: boba-postgres-test
+    environment:
+      POSTGRES_DB: boba_test
+      POSTGRES_USER: boba_test
+      POSTGRES_PASSWORD: boba_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      # Use tmpfs for speed — test data is ephemeral
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boba_test -d boba_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: boba-redis-test
+    ports:
+      - "6380:6379"
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
