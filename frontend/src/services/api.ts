@@ -19,7 +19,9 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem('boba_token');
+  // JWT is stored in memory (authToken module), never in localStorage.
+  const { getToken } = await import('./authToken.js');
+  const token = getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
