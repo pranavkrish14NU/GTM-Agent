@@ -15,6 +15,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.js';
+import { OAUTH_REDIRECT_URI } from './oauthConfig.js';
 
 /** Known OAuth error codes from RFC 6749 §4.1.2.1 and Google's extension. */
 const KNOWN_OAUTH_ERRORS = new Set([
@@ -68,7 +69,9 @@ export default function Callback() {
       return;
     }
 
-    signIn(code)
+    // Forward the code, the opaque OAuth state, and the SAME redirect_uri used
+    // at authorize time so the backend's Google token exchange matches.
+    signIn(code, stateParam ?? '', OAUTH_REDIRECT_URI)
       .then(() => navigate('/dashboard', { replace: true }))
       .catch(() => navigate('/signin', { replace: true }));
   }, [searchParams, signIn, navigate]);

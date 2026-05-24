@@ -33,7 +33,11 @@ export function createAuthRouter(authService: AuthService): Router {
   // Issues BOBA JWT and sets refresh token as HttpOnly cookie.
   // -------------------------------------------------------------------------
   router.post('/callback', async (req: Request, res: Response): Promise<void> => {
-    const { code, state } = req.body as { code?: string; state?: string };
+    const { code, state, redirect_uri: redirectUri } = req.body as {
+      code?: string;
+      state?: string;
+      redirect_uri?: string;
+    };
 
     if (!code || !state) {
       res.status(400).json({ error: 'code and state are required' });
@@ -41,8 +45,10 @@ export function createAuthRouter(authService: AuthService): Router {
     }
 
     try {
+      // Replay the SPA's redirect_uri to Google; it must match the one used to
+      // build the authorize request, or the code exchange fails.
       const { accessToken, refreshToken, expiresIn } =
-        await authService.handleCallback(code, state);
+        await authService.handleCallback(code, state, redirectUri);
 
       // Set refresh token as HttpOnly, Secure, SameSite=Strict cookie.
       res.cookie(config.refreshToken.cookieName, refreshToken, {

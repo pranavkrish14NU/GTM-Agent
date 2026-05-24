@@ -14,6 +14,9 @@ import type { AuthCallbackResponse, AuthRefreshResponse } from './types.js';
 
 const API_BASE = (import.meta.env['VITE_API_URL'] as string | undefined) ?? 'http://localhost:8080';
 
+/** Name of the readable (non-HttpOnly) CSRF cookie set by the API. */
+const CSRF_COOKIE_NAME = 'boba_csrf';
+
 class AuthApiError extends Error {
   constructor(
     public readonly status: number,
@@ -24,18 +27,34 @@ class AuthApiError extends Error {
   }
 }
 
+/**
+ * Read the double-submit CSRF token the API sets as a readable cookie. The
+ * cookie-reliant endpoints (/v1/auth/refresh, /v1/auth/logout) require it to be
+ * echoed back in the X-CSRF-Token header.
+ */
+function readCsrfToken(): string | undefined {
+  const match = document.cookie
+    .split('; ')
+    .find((c) => c.startsWith(`${CSRF_COOKIE_NAME}=`));
+  return match?.slice(CSRF_COOKIE_NAME.length + 1);
+}
+
 async function authRequest<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  const csrfToken = readCsrfToken();
   const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
       // X-Requested-With prevents cross-origin CSRF: browsers require a pre-flight
       // for custom headers, blocking malicious cross-origin POSTs without a CSRF token.
       'X-Requested-With': 'XMLHttpRequest',
+      // Echo the double-submit CSRF cookie for cookie-reliant endpoints.
+      ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+      ...(options.headers as Record<string, string> | undefined),
     },
-    ...options,
   });
 
   if (!res.ok) {
@@ -50,13 +69,20 @@ async function authRequest<T>(
 /**
  * Exchange a Google OAuth authorization code for a BOBA access token.
  * The refresh token is returned as an HttpOnly cookie by the backend.
+ *
+ * @param code        the authorization code Google appended to the redirect.
+ * @param state       the opaque CSRF state echoed back by Google (required by the API).
+ * @param redirectUri the SAME redirect_uri used to build the authorize request;
+ *                    the API replays it to Google so the exchange matches.
  */
 export function exchangeCodeForToken(
   code: string,
+  state: string,
+  redirectUri: string,
 ): Promise<AuthCallbackResponse> {
   return authRequest<AuthCallbackResponse>('/v1/auth/callback', {
     method: 'POST',
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({ code, state, redirect_uri: redirectUri }),
     credentials: 'include', // Accept the HttpOnly refresh-token cookie
   });
 }
