@@ -35,7 +35,7 @@ infra/terraform/
 
 ## Prerequisites
 
-- Terraform >= 1.7
+- Terraform >= 1.5 to `init`/`validate`/`plan`/`apply`; >= 1.7 to run the `mock_provider` unit tests (`terraform test`)
 - `gcloud` authenticated with rights to create networking, IAM, and storage
   resources in the target project(s): `gcloud auth application-default login`
 
