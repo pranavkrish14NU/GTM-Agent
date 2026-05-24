@@ -1,0 +1,411 @@
+/* ==========================================================================
+   Dashboard — GTM Command Center
+   ========================================================================== */
+
+.page {
+  padding: 1.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   Page header
+   -------------------------------------------------------------------------- */
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.pageSubtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0.25rem 0 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lastUpdated {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.refreshButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4375rem 0.875rem;
+  border-radius: 0.375rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.refreshButton:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.refreshButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.refreshIcon {
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.refreshIcon.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------------------
+   Overall health score — SVG ring gauge
+   -------------------------------------------------------------------------- */
+
+.scoreSection {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.scoreRingWrap {
+  flex-shrink: 0;
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.scoreRing {
+  transform: rotate(-90deg);
+  width: 120px;
+  height: 120px;
+}
+
+.scoreRingTrack {
+  fill: none;
+  stroke: #f1f5f9;
+  stroke-width: 10;
+}
+
+.scoreRingFill {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.6s ease-out, stroke 0.4s ease-out;
+}
+
+.scoreRingFill.high   { stroke: #22c55e; }
+.scoreRingFill.medium { stroke: #f59e0b; }
+.scoreRingFill.low    { stroke: #ef4444; }
+
+.scoreLabel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.scoreValue {
+  font-size: 1.875rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #0f172a;
+}
+
+.scoreUnit {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  margin-top: 0.125rem;
+}
+
+.scoreMeta {
+  flex: 1;
+  min-width: 200px;
+}
+
+.scoreHeading {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.375rem;
+}
+
+.scoreDescription {
+  font-size: 0.875rem;
+  color: #475569;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Section headings
+   -------------------------------------------------------------------------- */
+
+.sectionHeading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   Dimensions grid
+   -------------------------------------------------------------------------- */
+
+.dimensionsSection {
+  margin-bottom: 1.75rem;
+}
+
+.dimensionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   Dimension card
+   -------------------------------------------------------------------------- */
+
+.dimCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.625rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.dimCard.high   { border-left: 4px solid #22c55e; }
+.dimCard.medium { border-left: 4px solid #f59e0b; }
+.dimCard.low    { border-left: 4px solid #ef4444; }
+
+.dimHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dimName {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1e293b;
+  flex: 1;
+  margin: 0;
+}
+
+.dimScoreBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.dimScoreBadge.high   { background: #dcfce7; color: #15803d; }
+.dimScoreBadge.medium { background: #fef9c3; color: #a16207; }
+.dimScoreBadge.low    { background: #fee2e2; color: #b91c1c; }
+
+.dimPayload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.dimPayloadRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.dimPayloadLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+.dimPayloadText {
+  color: #374151;
+}
+
+.dimFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.375rem;
+  border-top: 1px solid #f1f5f9;
+  gap: 0.5rem;
+}
+
+.dimTime {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+}
+
+/* --------------------------------------------------------------------------
+   Priority recommendations
+   -------------------------------------------------------------------------- */
+
+.recommendationsSection {
+  margin-bottom: 1.75rem;
+}
+
+.recommendationList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
+}
+
+.recRank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: #f1f5f9;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.recBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.recDimName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem;
+}
+
+.recAction {
+  font-size: 0.8125rem;
+  color: #475569;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.recLink {
+  flex-shrink: 0;
+  padding: 0.3125rem 0.75rem;
+  border-radius: 0.375rem;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.recLink:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* --------------------------------------------------------------------------
+   Skeleton / loading state
+   -------------------------------------------------------------------------- */
+
+.skeletonScoreSection {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.skeletonRing {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeletonMeta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Error banner (refresh error)
+   -------------------------------------------------------------------------- */
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.8125rem;
+  color: #b91c1c;
+}
