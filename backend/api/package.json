@@ -13,7 +13,8 @@
     "test:watch": "vitest --config vitest.config.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:integration:watch": "vitest --config vitest.integration.config.ts",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "validate-spec": "node --import tsx/esm -e \"import { openApiSpec } from './src/openapi.ts'; const s=openApiSpec; if(s.openapi!=='3.0.3') throw new Error('bad version'); if(!s.paths||Object.keys(s.paths).length===0) throw new Error('no paths'); console.log('OpenAPI spec OK — paths:', Object.keys(s.paths).length);\""
   },
   "dependencies": {
     "@boba/database": "*",
