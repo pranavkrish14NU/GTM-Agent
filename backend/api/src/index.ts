@@ -10,7 +10,10 @@ import cookieParser from 'cookie-parser';
 import pg from 'pg';
 import { createAuthRouter } from './routes/auth.js';
 import { createWorkspaceRouter } from './routes/workspaces.js';
+import { createDriveConnectionsRouter } from './routes/drive-connections.js';
 import { AuthService } from './services/auth.service.js';
+import { DriveConnectionService } from './services/drive-connection.service.js';
+import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
 const { Pool } = pg;
@@ -37,6 +40,10 @@ export function createApp(pool: pg.Pool) {
 
   // Workspace routes (requires JWT + RBAC — see createWorkspaceRouter).
   app.use('/v1/workspaces', createWorkspaceRouter(authService, pool));
+
+  // Drive connection routes (requires JWT + admin role — see createDriveConnectionsRouter).
+  const driveConnectionService = new DriveConnectionService(pool, new CloudTasksQueue());
+  app.use('/v1/connections/drive', createDriveConnectionsRouter(authService, driveConnectionService));
 
   // 404 handler.
   app.use((_req, res) => {
