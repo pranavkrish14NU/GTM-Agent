@@ -6,6 +6,9 @@
  *   performs a pgvector similarity search, synthesises an answer via the LLM,
  *   and returns a structured response with citations and confidence.
  *
+ *   Responses are cached for 5 minutes keyed by SHA-256(query) + workspace_id
+ *   to avoid redundant embedding + LLM calls for identical repeated queries.
+ *
  * GET /v1/ask/history
  *   Returns paginated query history for the authenticated user.
  *
@@ -16,6 +19,9 @@
 import { Router, type Request, type Response } from 'express';
 import type { AuthService } from '../services/auth.service.js';
 import type { AskService } from '../services/ask.service.js';
+import type { CacheService } from '../services/cache.service.js';
+import { hashQuery, cacheKey, CACHE_TTL_ASK_MS } from '../services/cache.service.js';
+import type { AskResponse } from '../services/ask.service.js';
 import { createJwtMiddleware } from '../middleware/jwt.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { llmRateLimit } from '../middleware/rate-limit.middleware.js';
@@ -24,6 +30,7 @@ import { createBodyValidator, ASK_BODY_SCHEMA } from '../middleware/validate-bod
 export function createAskRouter(
   authService: AuthService,
   askService: AskService,
+  cache?: CacheService,
 ): Router {
   const router = Router();
   const jwtGuard = createJwtMiddleware(authService);
@@ -33,6 +40,13 @@ export function createAskRouter(
   // Submit a natural-language query.
   //
   // Request body: { query: string, conversation_id?: string }
+  //
+  // Cache behaviour:
+  //   Cache key = boba:{workspace_id}:ask:{sha256(trimmed query)}
+  //   TTL       = 5 minutes
+  //   Cached responses are returned directly without hitting the LLM.
+  //   A new conversation_id is not supplied when returning a cached response
+  //   (the original query_id / conversation_id from the cached payload is used).
   //
   // Response:
   //   {
@@ -58,11 +72,32 @@ export function createAskRouter(
         conversation_id?: string;
       };
 
+      const workspaceId = req.user!.workspace_id;
+      const trimmedQuery = query.trim();
+
       try {
+        // Cache lookup — only cache standalone queries (no conversation context),
+        // since conversational replies depend on history that may change.
+        if (cache && !conversation_id) {
+          const key = cacheKey(workspaceId, 'ask', hashQuery(trimmedQuery));
+          const cached = await cache.get<AskResponse>(key);
+          if (cached !== null) {
+            res.json(cached);
+            return;
+          }
+
+          const result = await askService.ask(workspaceId, req.user!.user_id, trimmedQuery, undefined);
+          // Fire-and-forget — don't delay the response for cache writes.
+          void cache.set(key, result, CACHE_TTL_ASK_MS);
+          res.json(result);
+          return;
+        }
+
+        // No cache or conversational query — call service directly.
         const result = await askService.ask(
-          req.user!.workspace_id,
+          workspaceId,
           req.user!.user_id,
-          query.trim(),
+          trimmedQuery,
           conversation_id,
         );
         res.json(result);

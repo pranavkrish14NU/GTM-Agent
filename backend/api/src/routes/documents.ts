@@ -9,17 +9,25 @@
  *
  * All routes require a valid BOBA JWT with at least the 'viewer' role.
  * The workspace is always derived from JWT claims — no workspace ID in the URL.
+ *
+ * Caching:
+ *   GET /v1/documents (paginated list) is cached for 2 minutes per workspace
+ *   per page+pageSize combination.  The cache is invalidated whenever a Drive
+ *   sync completes (external caller: DriveConnectionService via invalidateDocumentCache).
  */
 
 import { Router, type Request, type Response } from 'express';
 import type { AuthService } from '../services/auth.service.js';
 import type { DocumentService } from '../services/document.service.js';
+import type { CacheService } from '../services/cache.service.js';
+import { cacheKey, cachePrefix, CACHE_TTL_DOCUMENTS_MS } from '../services/cache.service.js';
 import { createJwtMiddleware } from '../middleware/jwt.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 
 export function createDocumentsRouter(
   authService: AuthService,
   documentService: DocumentService,
+  cache?: CacheService,
 ): Router {
   const router = Router();
   const jwtGuard = createJwtMiddleware(authService);
@@ -28,6 +36,11 @@ export function createDocumentsRouter(
   // GET /v1/documents
   // Returns a paginated list of documents for the workspace, sorted by
   // last_synced DESC. Freshness scores are computed at query time.
+  //
+  // Cache behaviour:
+  //   Cache key = boba:{workspace_id}:documents:{page}:{pageSize}
+  //   TTL       = 2 minutes
+  //   Invalidated on Drive sync completion (invalidatePattern on prefix)
   //
   // Query params:
   //   page     — 1-based page number (default: 1)
@@ -41,10 +54,32 @@ export function createDocumentsRouter(
       const page = parseInt(req.query['page'] as string ?? '1', 10);
       const pageSize = parseInt(req.query['pageSize'] as string ?? '20', 10);
 
+      const effectivePage = isNaN(page) ? 1 : page;
+      const effectivePageSize = isNaN(pageSize) ? 20 : pageSize;
+
+      const workspaceId = req.user!.workspace_id;
+
       try {
-        const result = await documentService.listDocuments(req.user!.workspace_id, {
-          page: isNaN(page) ? 1 : page,
-          pageSize: isNaN(pageSize) ? 20 : pageSize,
+        if (cache) {
+          const key = cacheKey(workspaceId, 'documents', `${effectivePage}:${effectivePageSize}`);
+          const cached = await cache.get(key);
+          if (cached !== null) {
+            res.json(cached);
+            return;
+          }
+
+          const result = await documentService.listDocuments(workspaceId, {
+            page: effectivePage,
+            pageSize: effectivePageSize,
+          });
+          void cache.set(key, result, CACHE_TTL_DOCUMENTS_MS);
+          res.json(result);
+          return;
+        }
+
+        const result = await documentService.listDocuments(workspaceId, {
+          page: effectivePage,
+          pageSize: effectivePageSize,
         });
         res.json(result);
       } catch (err) {
@@ -155,4 +190,22 @@ export function createDocumentsRouter(
   );
 
   return router;
+}
+
+// ---------------------------------------------------------------------------
+// Exported helper for external cache invalidation on sync completion
+// ---------------------------------------------------------------------------
+
+/**
+ * Invalidate all cached document-list pages for the given workspace.
+ * Call this from the Drive sync handler when a sync completes successfully.
+ *
+ * @param cache       The shared CacheService instance
+ * @param workspaceId The workspace whose document list cache should be cleared
+ */
+export async function invalidateDocumentCache(
+  cache: CacheService,
+  workspaceId: string,
+): Promise<void> {
+  await cache.invalidatePattern(cachePrefix(workspaceId, 'documents'));
 }
