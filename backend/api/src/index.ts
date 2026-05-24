@@ -21,6 +21,7 @@ import { createPersonaRouter } from './routes/personas.js';
 import { createCompetitorRouter } from './routes/competitors.js';
 import { createWinLossRouter } from './routes/winloss.js';
 import { createContentRouter } from './routes/content.js';
+import { createDriveRouter } from './routes/drive.js';
 import { AuthService } from './services/auth.service.js';
 import { DriveConnectionService } from './services/drive-connection.service.js';
 import { DocumentService } from './services/document.service.js';
@@ -32,6 +33,7 @@ import { PersonaService } from './services/persona.service.js';
 import { CompetitorService } from './services/competitor.service.js';
 import { WinLossService } from './services/winloss.service.js';
 import { ContentService } from './services/content.service.js';
+import { ExportService, HttpDriveApiClient } from './services/export.service.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
@@ -103,7 +105,17 @@ export function createApp(pool: pg.Pool) {
 
   // Content Generation routes — multi-format content with brand voice and persona fit scoring.
   const contentService = new ContentService(pool, llmGateway);
-  app.use('/v1/content', createContentRouter(authService, contentService));
+
+  // Export service — saves content drafts to Google Drive using the workspace Drive connection.
+  const exportService = new ExportService(
+    pool,
+    { getAccessToken: (wid) => driveConnectionService.getDecryptedAccessToken(wid) },
+    new HttpDriveApiClient(),
+  );
+  app.use('/v1/content', createContentRouter(authService, contentService, exportService));
+
+  // Drive utility routes — folder picker for export workflow.
+  app.use('/v1/drive', createDriveRouter(authService, exportService));
 
   // 404 handler.
   app.use((_req, res) => {

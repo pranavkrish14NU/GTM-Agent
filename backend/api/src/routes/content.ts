@@ -8,6 +8,12 @@
  *
  * GET /v1/content/drafts/:id
  *   Returns a single content draft by ID.
+ *
+ * POST /v1/content/drafts/:id/export
+ *   Exports a draft to Google Drive as a Google Doc or PDF.
+ *   Body: { folderId?, format: 'gdoc' | 'pdf' }
+ *   Returns: { exportId, status, fileId, webViewLink, format, exportedAt }
+ *   Requires 'member' role or above.
  *   Returns 404 if the draft does not exist or belongs to another user.
  *   Requires 'viewer' role or above.
  *
@@ -30,12 +36,14 @@
 import { Router, type Request, type Response } from 'express';
 import type { AuthService } from '../services/auth.service.js';
 import type { ContentService } from '../services/content.service.js';
+import type { ExportService } from '../services/export.service.js';
 import { createJwtMiddleware } from '../middleware/jwt.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 
 export function createContentRouter(
   authService: AuthService,
   contentService: ContentService,
+  exportService: ExportService,
 ): Router {
   const router = Router();
   const jwtGuard = createJwtMiddleware(authService);
@@ -168,6 +176,49 @@ export function createContentRouter(
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to refine content draft';
         res.status(500).json({ error: message });
+      }
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // POST /v1/content/drafts/:id/export
+  // Exports a content draft to Google Drive as a Google Doc or PDF.
+  //
+  // Requires 'member' role — export is a write operation (creates Drive file).
+  //
+  // Request body: { folderId?: string, format: 'gdoc' | 'pdf' }
+  // Response: ExportResult (exportId, status, fileId, webViewLink, format, exportedAt)
+  // -------------------------------------------------------------------------
+  router.post(
+    '/drafts/:id/export',
+    jwtGuard,
+    requireRole('member'),
+    async (req: Request, res: Response): Promise<void> => {
+      try {
+        const { workspace_id, user_id } = req.user!;
+        const { id } = req.params as { id: string };
+        const body = req.body as { folderId?: string; format?: string };
+
+        if (!body.format || !['gdoc', 'pdf'].includes(body.format)) {
+          res.status(400).json({
+            error: 'Missing or invalid field: format must be "gdoc" or "pdf"',
+          });
+          return;
+        }
+
+        const result = await exportService.exportDraft(
+          workspace_id,
+          user_id,
+          id,
+          body.folderId,
+          body.format as 'gdoc' | 'pdf',
+        );
+
+        res.status(201).json(result);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to export content draft';
+        const status = message.includes('not found') ? 404 : 500;
+        res.status(status).json({ error: message });
       }
     },
   );
