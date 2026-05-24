@@ -97,3 +97,22 @@ variable "redis_memory_size_gb" {
   type        = number
   default     = 4
 }
+
+# --- Monitoring / Observability (WO-012) ---
+variable "monitoring_notification_email" {
+  description = "Email address for Cloud Monitoring alert notifications."
+  type        = string
+}
+
+variable "monitoring_slack_channel_name" {
+  description = "Slack channel for Cloud Monitoring alerts (e.g. '#ops-alerts'). Leave empty to disable."
+  type        = string
+  default     = ""
+}
+
+variable "monitoring_slack_auth_token" {
+  description = "Slack OAuth token for the monitoring notification channel. Sensitive."
+  type        = string
+  default     = ""
+  sensitive   = true
+}

@@ -28,3 +28,8 @@ cloud_sql_deletion_protection = false
 
 # Redis (WO-004)
 redis_memory_size_gb = 1
+
+# Monitoring / Observability (WO-012)
+monitoring_notification_email = "ops-dev@boba.example.com" # replace with real ops email
+monitoring_slack_channel_name = ""                          # set to Slack channel name to enable (e.g. "#ops-alerts-dev")
+# monitoring_slack_auth_token managed via Secret Manager / CI env var
