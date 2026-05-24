@@ -46,6 +46,32 @@ function withAuth(element: ReactNode) {
   return withSuspense(<ProtectedRoute>{element}</ProtectedRoute>);
 }
 
+/** Friendly fallback for thrown route errors (replaces React Router's dev page). */
+function RouteError() {
+  return (
+    <div
+      role="alert"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        gap: '0.75rem',
+        color: '#475569',
+        fontSize: '0.95rem',
+        textAlign: 'center',
+        padding: '2rem',
+      }}
+    >
+      <div style={{ fontSize: '2rem' }}>⚠️</div>
+      <h1 style={{ fontSize: '1.1rem', margin: 0 }}>Something went wrong</h1>
+      <p style={{ margin: 0 }}>The page failed to load. Try again, or head back to your dashboard.</p>
+      <a href="/dashboard" style={{ color: '#2563eb', fontWeight: 600 }}>Go to Command Center →</a>
+    </div>
+  );
+}
+
 export const router = createBrowserRouter([
   // ---------------------------------------------------------------------------
   // Public routes — accessible without authentication
@@ -53,10 +79,12 @@ export const router = createBrowserRouter([
   {
     path: '/signin',
     element: withSuspense(<SignIn />),
+    errorElement: <RouteError />,
   },
   {
     path: '/auth/callback',
     element: withSuspense(<Callback />),
+    errorElement: <RouteError />,
   },
 
   // ---------------------------------------------------------------------------
@@ -65,6 +93,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: withAuth(<Layout />),
+    errorElement: <RouteError />,
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard',  element: withSuspense(<Dashboard />) },
@@ -79,5 +108,14 @@ export const router = createBrowserRouter([
       { path: 'analytics',  element: withSuspense(<Analytics />) },
       { path: 'settings',   element: withSuspense(<Settings />) },
     ],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Catch-all — unknown URLs fall back to the app root (which routes to
+  // /dashboard when authenticated, or /signin when not) instead of a 404.
+  // ---------------------------------------------------------------------------
+  {
+    path: '*',
+    element: <Navigate to="/dashboard" replace />,
   },
 ]);

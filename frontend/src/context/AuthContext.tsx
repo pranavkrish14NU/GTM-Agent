@@ -75,6 +75,11 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Guards the mount silent-refresh against React StrictMode's double-invoke in
+  // dev (and any remount), which would otherwise fire two concurrent refreshes
+  // and race the single-use refresh-token rotation — one rotates, the other 401s
+  // and spuriously logs the user out.
+  const didInitRef = useRef(false);
 
   /** Store the token in React state AND the module singleton. */
   const storeToken = useCallback((token: string) => {
@@ -122,6 +127,8 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
 
   /** On mount: attempt a silent refresh to restore an existing session. */
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
     doRefresh()
       .catch(() => { /* noop — user is not authenticated */ })
       .finally(() => setIsLoading(false));
