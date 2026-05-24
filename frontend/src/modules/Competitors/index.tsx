@@ -14,7 +14,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { SkeletonLoader, CardSkeleton, EmptyState } from '../../components/common/index.js';
+import { SkeletonLoader, EmptyState } from '../../components/common/index.js';
 import { formatRelativeTime } from '../../utils/index.js';
 import { useDrawer } from '../../context/DrawerContext.js';
 import { getCompetitors, getCompetitorBattlecard, analyzeCompetitors } from './api.js';
