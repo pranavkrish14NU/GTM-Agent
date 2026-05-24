@@ -12,9 +12,11 @@ import { createAuthRouter } from './routes/auth.js';
 import { createWorkspaceRouter } from './routes/workspaces.js';
 import { createDriveConnectionsRouter } from './routes/drive-connections.js';
 import { createDocumentsRouter } from './routes/documents.js';
+import { createCitationsRouter } from './routes/citations.js';
 import { AuthService } from './services/auth.service.js';
 import { DriveConnectionService } from './services/drive-connection.service.js';
 import { DocumentService } from './services/document.service.js';
+import { CitationService } from './services/citation.service.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
@@ -50,6 +52,10 @@ export function createApp(pool: pg.Pool) {
   // Document routes (requires JWT + viewer role — see createDocumentsRouter).
   const documentService = new DocumentService(pool);
   app.use('/v1/documents', createDocumentsRouter(authService, documentService));
+
+  // Citation routes (nested under /v1/insights/:id — see createCitationsRouter).
+  const citationService = new CitationService(pool);
+  app.use('/v1/insights/:id/citations', createCitationsRouter(authService, citationService));
 
   // 404 handler.
   app.use((_req, res) => {
