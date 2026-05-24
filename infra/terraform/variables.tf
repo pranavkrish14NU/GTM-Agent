@@ -110,6 +110,12 @@ variable "monitoring_slack_channel_name" {
   default     = ""
 }
 
+variable "github_repository" {
+  description = "GitHub repository in 'owner/repo' format allowed to authenticate via Workload Identity Federation (e.g. 'pranavkrish14NU/GTM-Agent')."
+  type        = string
+  default     = "pranavkrish14NU/GTM-Agent"
+}
+
 variable "monitoring_slack_auth_token" {
   description = "Slack OAuth token for the monitoring notification channel. Sensitive."
   type        = string
