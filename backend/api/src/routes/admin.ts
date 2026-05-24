@@ -4,20 +4,26 @@
  * All endpoints require 'admin' role or above (Owner and Admin only).
  * Workspace isolation is enforced via the JWT workspace_id on every query.
  *
- * GET  /v1/admin/connections         — list all Drive connections
- * PUT  /v1/admin/connections/:id     — update connection config (scopes, folder mappings)
- * GET  /v1/admin/users               — list workspace members with roles
- * PUT  /v1/admin/users/:id/role      — update user role (owner-only for owner assignment)
- * POST /v1/admin/sync/schedule       — configure automatic sync schedule
- * GET  /v1/admin/audit-logs          — paginated audit logs with optional filters
+ * GET    /v1/admin/connections         — list all Drive connections
+ * PUT    /v1/admin/connections/:id     — update connection config (scopes, folder mappings)
+ * GET    /v1/admin/users               — list workspace members with roles
+ * PUT    /v1/admin/users/:id/role      — update user role (owner-only for owner assignment)
+ * POST   /v1/admin/sync/schedule       — configure automatic sync schedule
+ * GET    /v1/admin/audit-logs          — paginated audit logs with optional filters
  *
- * Significant admin actions (role change, connection update, schedule change)
+ * GDPR data subject rights (Article 17 & 20):
+ * POST   /v1/admin/data-export         — export requesting user's data (right of access)
+ * DELETE /v1/admin/users/:id/data      — erase user-specific data (right to erasure)
+ * DELETE /v1/admin/workspace           — permanently delete workspace (owner only)
+ *
+ * Significant admin actions (role change, connection update, schedule change, GDPR requests)
  * are recorded as audit log entries for SOC 2 traceability.
  */
 
 import { Router, type Request, type Response } from 'express';
 import type { AuthService } from '../services/auth.service.js';
 import type { AdminService } from '../services/admin.service.js';
+import { GDPR_CONFIRM_WORKSPACE_DELETE, GDPR_CONFIRM_USER_DELETE } from '../services/admin.service.js';
 import { createJwtMiddleware } from '../middleware/jwt.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import type { Role } from '../rbac/roles.js';
@@ -238,6 +244,137 @@ export function createAdminRouter(
       res.status(500).json({ error: message });
     }
   });
+
+  // =========================================================================
+  // GDPR Data Subject Rights (Article 17 right to erasure, Article 20 portability)
+  // =========================================================================
+
+  // -------------------------------------------------------------------------
+  // POST /v1/admin/data-export
+  // Generates a portable JSON export of the requesting user's data:
+  //   profile, NL queries, and content drafts.
+  //
+  // GDPR Article 20 — right to data portability.
+  // An audit log entry is recorded for this access request.
+  // -------------------------------------------------------------------------
+  router.post('/data-export', async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { workspace_id, user_id } = req.user!;
+
+      const exportData = await adminService.exportUserData(workspace_id, user_id);
+
+      // Record audit log for GDPR transparency.
+      void adminService.recordAuditLog({
+        workspace_id,
+        user_id,
+        user_email: exportData.email,
+        action: 'gdpr.data_export',
+        resource_type: 'user',
+        resource_id: user_id,
+        metadata: {
+          queries_exported: exportData.queries.length,
+          drafts_exported: exportData.drafts.length,
+        },
+        ip_address: req.ip ?? null,
+      });
+
+      res.json(exportData);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to export user data';
+      const statusCode = message.includes('not found') ? 404 : 500;
+      res.status(statusCode).json({ error: message });
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // DELETE /v1/admin/users/:id/data
+  // Erases all user-specific data (queries, drafts) for the specified user.
+  //
+  // GDPR Article 17 — right to erasure (partial: user-owned records only).
+  // Workspace-level data (documents, embeddings) is preserved.
+  //
+  // Body: { confirm: 'DELETE_MY_DATA' }
+  // An audit log entry is recorded BEFORE deletion.
+  // Requires admin role or above.
+  // -------------------------------------------------------------------------
+  router.delete('/users/:id/data', async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { workspace_id, user_id: requestedById } = req.user!;
+      const targetUserId = req.params['id'] as string;
+      const { confirm } = req.body as { confirm?: string };
+
+      if (confirm !== GDPR_CONFIRM_USER_DELETE) {
+        res.status(400).json({
+          error: `Confirmation required: set confirm to '${GDPR_CONFIRM_USER_DELETE}'`,
+        });
+        return;
+      }
+
+      await adminService.deleteUserData(
+        workspace_id,
+        targetUserId,
+        requestedById,
+        null, // email resolved by service from user record
+      );
+
+      res.json({
+        message: 'User data deleted successfully',
+        user_id: targetUserId,
+        deleted_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete user data';
+      const statusCode = message.includes('not found') ? 404 : 500;
+      res.status(statusCode).json({ error: message });
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // DELETE /v1/admin/workspace
+  // Permanently deletes the entire workspace and ALL associated data.
+  //
+  // GDPR Article 17 — right to erasure (workspace-wide).
+  // Includes: documents, chunks, embeddings, queries, drafts, users,
+  //           connections (with OAuth token revocation), insights, audit logs.
+  //
+  // This operation is IRREVERSIBLE. Requires:
+  //   - Owner role (highest privilege)
+  //   - Body: { confirm: 'DELETE_WORKSPACE' }
+  //
+  // An audit log entry is recorded BEFORE any data is destroyed.
+  // -------------------------------------------------------------------------
+  router.delete(
+    '/workspace',
+    requireRole('owner'), // Override the router-level admin guard — owner only.
+    async (req: Request, res: Response): Promise<void> => {
+      try {
+        const { workspace_id, user_id } = req.user!;
+        const { confirm } = req.body as { confirm?: string };
+
+        if (confirm !== GDPR_CONFIRM_WORKSPACE_DELETE) {
+          res.status(400).json({
+            error: `Confirmation required: set confirm to '${GDPR_CONFIRM_WORKSPACE_DELETE}'`,
+          });
+          return;
+        }
+
+        await adminService.deleteWorkspace(workspace_id, user_id, null, confirm);
+
+        res.json({
+          message: 'Workspace permanently deleted',
+          workspace_id,
+          deleted_at: new Date().toISOString(),
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to delete workspace';
+        const statusCode =
+          message.includes('not found') ? 404
+          : message.includes('Confirmation') ? 400
+          : 500;
+        res.status(statusCode).json({ error: message });
+      }
+    },
+  );
 
   return router;
 }

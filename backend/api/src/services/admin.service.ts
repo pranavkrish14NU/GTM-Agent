@@ -6,6 +6,7 @@
  *   - User role management (list members, update roles with owner protection)
  *   - Sync schedule configuration (hourly, daily, custom cron)
  *   - Audit logging (record actions, query with filters, 90-day retention)
+ *   - GDPR data subject rights: data export, user data deletion, workspace deletion
  *
  * Pure functions (validateCronExpression, computeRetentionCutoff,
  * isWithinRetentionPeriod, buildAuditLogFilters) are exported for unit testing.
@@ -104,6 +105,49 @@ export interface UpdateConnectionInput {
   folder_mappings?: unknown[];
 }
 
+// ---------------------------------------------------------------------------
+// GDPR data subject rights types
+// ---------------------------------------------------------------------------
+
+/**
+ * Confirmation token values for irreversible destructive operations.
+ * The client must echo back the exact string as a double-confirm guard.
+ */
+export const GDPR_CONFIRM_USER_DELETE = 'DELETE_MY_DATA' as const;
+export const GDPR_CONFIRM_WORKSPACE_DELETE = 'DELETE_WORKSPACE' as const;
+
+export interface QueryRecord {
+  id: string;
+  query_text: string;
+  response_summary: string | null;
+  created_at: string;
+}
+
+export interface DraftRecord {
+  id: string;
+  title: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Portable data export for a single workspace user (GDPR Article 20 — data portability).
+ */
+export interface UserDataExport {
+  user_id: string;
+  email: string;
+  name: string | null;
+  role: Role;
+  exported_at: string;
+  profile: {
+    created_at: string;
+    last_active_at: string | null;
+  };
+  queries: QueryRecord[];
+  drafts: DraftRecord[];
+}
+
 // Internal DB row shapes
 interface DriveConnectionRow {
   id: string;
@@ -155,6 +199,21 @@ interface SyncScheduleRow {
 
 interface CountRow {
   count: string;
+}
+
+interface QueryRow {
+  id: string;
+  query_text: string;
+  response_summary: string | null;
+  created_at: string;
+}
+
+interface DraftRow {
+  id: string;
+  title: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -463,6 +522,7 @@ export class AdminService {
    * Audit actions are categorised as:
    *   user.*     — end-user actions (login, query, export)
    *   admin.*    — admin actions (role_change, connection_change, sync_schedule)
+   *   gdpr.*     — data subject rights (data_export, user_delete, workspace_delete)
    *   system.*   — automated events (sync, error)
    */
   async recordAuditLog(
@@ -487,5 +547,203 @@ export class AdminService {
       ],
     );
     return rows[0]!;
+  }
+
+  // ---- GDPR data subject rights --------------------------------------------
+
+  /**
+   * Export all data belonging to a workspace user (GDPR Article 20 — right to portability).
+   *
+   * Collects: user profile, NL queries with response summaries, content drafts.
+   * Excludes: raw chunk embeddings, encrypted OAuth tokens, audit log entries for other users.
+   *
+   * This operation is read-only and creates an audit log entry.
+   */
+  async exportUserData(workspaceId: string, userId: string): Promise<UserDataExport> {
+    // Fetch user profile.
+    const userResult = await this.pool.query<UserRow>(
+      `SELECT id, email, name, role, created_at, last_active_at
+         FROM users
+        WHERE id = $1 AND workspace_id = $2`,
+      [userId, workspaceId],
+    );
+    if (!userResult.rows[0]) {
+      throw new Error('User not found in this workspace');
+    }
+    const user = userResult.rows[0];
+
+    // Fetch NL queries.
+    const queriesResult = await this.pool.query<QueryRow>(
+      `SELECT id, query_text, response_summary, created_at
+         FROM queries
+        WHERE user_id = $1 AND workspace_id = $2
+        ORDER BY created_at DESC`,
+      [userId, workspaceId],
+    );
+
+    // Fetch content drafts.
+    const draftsResult = await this.pool.query<DraftRow>(
+      `SELECT id, title, status, created_at, updated_at
+         FROM content_drafts
+        WHERE user_id = $1 AND workspace_id = $2
+        ORDER BY created_at DESC`,
+      [userId, workspaceId],
+    );
+
+    return {
+      user_id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role as Role,
+      exported_at: new Date().toISOString(),
+      profile: {
+        created_at: user.created_at,
+        last_active_at: user.last_active_at,
+      },
+      queries: queriesResult.rows,
+      drafts: draftsResult.rows,
+    };
+  }
+
+  /**
+   * Delete all user-specific data (GDPR Article 17 — right to erasure).
+   *
+   * Removes: NL queries, content drafts. Preserves workspace-level data
+   * (documents, embeddings, insights) that belong to the workspace as a whole.
+   *
+   * An audit log entry is recorded BEFORE deletion so the action is traceable.
+   * Throws if the target user is not found in the workspace.
+   */
+  async deleteUserData(
+    workspaceId: string,
+    targetUserId: string,
+    requestedById: string,
+    requestedByEmail: string | null,
+  ): Promise<void> {
+    // Verify the target user exists in the workspace before deleting.
+    const userCheck = await this.pool.query<{ id: string }>(
+      `SELECT id FROM users WHERE id = $1 AND workspace_id = $2`,
+      [targetUserId, workspaceId],
+    );
+    if (!userCheck.rows[0]) {
+      throw new Error('User not found in this workspace');
+    }
+
+    // Record audit log BEFORE deletion — deletion is irreversible.
+    await this.recordAuditLog({
+      workspace_id: workspaceId,
+      user_id: requestedById,
+      user_email: requestedByEmail,
+      action: 'gdpr.user_data_delete',
+      resource_type: 'user',
+      resource_id: targetUserId,
+      metadata: { target_user_id: targetUserId },
+      ip_address: null,
+    });
+
+    // Delete all user-specific records.
+    await this.pool.query(
+      `DELETE FROM queries WHERE user_id = $1 AND workspace_id = $2`,
+      [targetUserId, workspaceId],
+    );
+    await this.pool.query(
+      `DELETE FROM content_drafts WHERE user_id = $1 AND workspace_id = $2`,
+      [targetUserId, workspaceId],
+    );
+  }
+
+  /**
+   * Permanently delete the entire workspace and all its data.
+   * Implements GDPR Article 17 right to erasure at the workspace level.
+   *
+   * Deletion sequence:
+   *   1. Audit log entry recorded (before any data is destroyed).
+   *   2. OAuth tokens revoked (nullified in drive_connections).
+   *   3. Dependent tables deleted in FK-safe order.
+   *   4. Workspace row deleted last.
+   *
+   * This operation is IRREVERSIBLE. The caller must pass confirmToken =
+   * GDPR_CONFIRM_WORKSPACE_DELETE ('DELETE_WORKSPACE') as a double-confirm guard.
+   *
+   * Throws if the workspace is not found or the confirm token is invalid.
+   */
+  async deleteWorkspace(
+    workspaceId: string,
+    requestedById: string,
+    requestedByEmail: string | null,
+    confirmToken: string,
+  ): Promise<void> {
+    if (confirmToken !== GDPR_CONFIRM_WORKSPACE_DELETE) {
+      throw new Error(
+        `Confirmation required: set confirm to '${GDPR_CONFIRM_WORKSPACE_DELETE}'`,
+      );
+    }
+
+    // Verify the workspace exists.
+    const wsCheck = await this.pool.query<{ id: string }>(
+      `SELECT id FROM workspaces WHERE id = $1`,
+      [workspaceId],
+    );
+    if (!wsCheck.rows[0]) {
+      throw new Error('Workspace not found');
+    }
+
+    // Record the final audit log entry BEFORE any data is destroyed.
+    await this.recordAuditLog({
+      workspace_id: workspaceId,
+      user_id: requestedById,
+      user_email: requestedByEmail,
+      action: 'gdpr.workspace_delete',
+      resource_type: 'workspace',
+      resource_id: workspaceId,
+      metadata: { requested_by: requestedById, irreversible: true },
+      ip_address: null,
+    });
+
+    // Step 1: Revoke all OAuth tokens — nullify encrypted tokens before deleting.
+    // This invalidates any cached credentials even if deletion were to fail mid-way.
+    await this.pool.query(
+      `UPDATE drive_connections
+          SET access_token_enc = NULL,
+              refresh_token_enc = NULL,
+              status = 'disconnected',
+              updated_at = NOW()
+        WHERE workspace_id = $1`,
+      [workspaceId],
+    );
+
+    // Step 2: Delete in FK-safe order.
+    // chunks → documents → queries → drafts → insights → connections → logs → schedules → users → workspaces
+
+    // Chunks depend on documents (via document_id FK).
+    await this.pool.query(
+      `DELETE FROM chunks
+        WHERE document_id IN (
+          SELECT id FROM documents WHERE workspace_id = $1
+        )`,
+      [workspaceId],
+    );
+
+    // All workspace-scoped tables.
+    const workspaceTables = [
+      'queries',
+      'content_drafts',
+      'documents',
+      'insights',
+      'drive_connections',
+      'audit_logs',
+      'sync_schedules',
+      'users',
+    ] as const;
+
+    for (const table of workspaceTables) {
+      await this.pool.query(
+        `DELETE FROM ${table} WHERE workspace_id = $1`,
+        [workspaceId],
+      );
+    }
+
+    // Finally delete the workspace itself.
+    await this.pool.query(`DELETE FROM workspaces WHERE id = $1`, [workspaceId]);
   }
 }
