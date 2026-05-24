@@ -27,7 +27,8 @@ infra/terraform/
 │   ├── redis/                 # private Memorystore Redis (STANDARD_HA, AUTH+TLS), env-sized, Secret Manager creds (WO-004)
 │   ├── cloud-tasks/           # async processing queues (file/embedding/insight) + DLQ, retry/rate limits, enqueuer IAM (WO-005)
 │   ├── secrets-kms/           # Cloud KMS keyring + rotating keys, Secret Manager secrets, least-privilege IAM (WO-006)
-│   └── artifact-registry/     # Docker repo + cleanup policies + ci-cd-deployer writer IAM; vuln scanning via Container Scanning API (WO-008)
+│   ├── artifact-registry/     # Docker repo + cleanup policies + ci-cd-deployer writer IAM; vuln scanning via Container Scanning API (WO-008)
+│   └── cloud-armor/           # WAF (OWASP Top 10 preconfigured rules) + per-IP rate limiting + L7 DDoS (WO-010)
 ├── backend.tf                 # gcs backend (bucket supplied at init time)
 ├── main.tf                    # composes the modules
 ├── variables.tf / outputs.tf

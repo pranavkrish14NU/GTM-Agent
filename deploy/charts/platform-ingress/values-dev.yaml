@@ -1,0 +1,5 @@
+domain: dev.boba.example.com
+clusterIssuer:
+  email: platform-dev@example.com
+cloudArmor:
+  policyName: boba-waf-dev

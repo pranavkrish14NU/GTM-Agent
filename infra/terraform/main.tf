@@ -97,6 +97,15 @@ module "cloud_sql" {
   depends_on = [module.project_services, module.networking, module.iam]
 }
 
+module "cloud_armor" {
+  source = "./modules/cloud-armor"
+
+  project_id  = var.project_id
+  environment = var.environment
+
+  depends_on = [module.project_services]
+}
+
 module "redis" {
   source = "./modules/redis"
 
