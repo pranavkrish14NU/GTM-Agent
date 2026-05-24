@@ -12,6 +12,8 @@ import { LLMGatewayService, MockLLMProvider, InMemoryTokenBudgetStore } from '@b
 import { securityHeaders } from './middleware/security-headers.middleware.js';
 import { csrfProtection } from './middleware/csrf.middleware.js';
 import { standardRateLimit } from './middleware/rate-limit.middleware.js';
+import { createJwtMiddleware } from './middleware/jwt.middleware.js';
+import { requireRole } from './middleware/rbac.middleware.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createWorkspaceRouter } from './routes/workspaces.js';
 import { createDriveConnectionsRouter } from './routes/drive-connections.js';
@@ -190,6 +192,23 @@ export function createApp(pool: pg.Pool) {
   // Admin Settings routes — connection management, user roles, sync schedule, audit logs.
   const adminService = new AdminService(pool);
   app.use('/v1/admin', createAdminRouter(authService, adminService));
+
+  // Cache metrics — exposes hit/miss counters + hit rate for the in-process
+  // cache so cache effectiveness is observable (WO-055). Admin-only.
+  const jwtGuard = createJwtMiddleware(authService);
+  app.get('/v1/admin/metrics/cache', jwtGuard, requireRole('admin'), (_req, res) => {
+    const hits = cache.hits;
+    const misses = cache.misses;
+    const total = hits + misses;
+    res.json({
+      cache: {
+        hits,
+        misses,
+        total,
+        hit_rate: total > 0 ? Math.round((hits / total) * 1000) / 1000 : 0,
+      },
+    });
+  });
 
   // 404 handler.
   app.use((_req, res) => {
