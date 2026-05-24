@@ -343,8 +343,12 @@ describe('createDriveConnector', () => {
     expect(connector).toBeInstanceOf(MockDriveConnector);
   });
 
-  it("throws for type 'google' (not yet implemented)", () => {
-    expect(() => createDriveConnector({ type: 'google' })).toThrow(/not yet implemented/i);
+  it("throws for type 'google' without an accessToken (implemented in WO-018)", () => {
+    // GoogleDriveConnector is now implemented; calling without a token throws a
+    // different error than "not yet implemented".
+    expect(() =>
+      createDriveConnector({ type: 'google', googleOptions: { accessToken: '' } }),
+    ).toThrow(/accessToken/i);
   });
 
   it('throws for unknown type', () => {

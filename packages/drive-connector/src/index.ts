@@ -19,4 +19,6 @@ export { SUPPORTED_MIME_TYPES } from './types.js';
 
 export { MockDriveConnector, type MockDriveConnectorOptions } from './mock/mock-connector.js';
 
+export { GoogleDriveConnector, type GoogleDriveConnectorOptions } from './google/google-drive-connector.js';
+
 export { createDriveConnector, type ConnectorType, type CreateConnectorOptions } from './factory.js';
