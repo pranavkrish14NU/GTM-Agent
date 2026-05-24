@@ -27,4 +27,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/backend/worker/dist ./backend/worker/dist
 COPY --from=build /app/backend/worker/package.json ./backend/worker/package.json
 USER nonroot
+# Health check: call /health endpoint via Node (no shell needed in distroless image).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD ["node", "-e", "require('http').get('http://localhost:8081/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
 CMD ["backend/worker/dist/index.js"]

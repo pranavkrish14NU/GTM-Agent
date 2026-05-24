@@ -1,0 +1,33 @@
+BOBA Sample GTM Document — For Testing Purposes
+
+Section 1: Executive Summary
+This document provides a sample GTM strategy for testing the BOBA document
+ingestion pipeline. It contains enough text to produce multiple chunks when
+processed by the chunking algorithm.
+
+Section 2: Market Analysis
+The B2B SaaS market for GTM tooling is growing rapidly. Organizations spend
+significant time manually compiling intelligence from disparate documents stored
+in Google Drive and other collaboration tools.
+
+Section 3: Target Segments
+Primary: Mid-market B2B SaaS (50-500 employees, $5M-$50M ARR)
+Secondary: Enterprise technology companies with complex GTM motions
+Tertiary: High-growth startups preparing for scale
+
+Section 4: Competitive Landscape
+Key competitors operate in adjacent categories but lack integrated AI intelligence:
+- Traditional CRM platforms: strong data capture but no synthesis
+- BI tools: dashboards without narrative intelligence
+- Document search tools: retrieval without insight generation
+
+Section 5: Go-To-Market Strategy
+Our go-to-market approach targets marketing and revenue operations leaders who
+feel the pain of information fragmentation most acutely. We lead with the Drive
+Knowledge Hub as an immediate pain-solver, then expand to AI insights.
+
+Section 6: Success Metrics
+Time-to-insight: < 2 minutes from query to actionable recommendation
+Drive sync coverage: >= 95% of mapped files indexed within 24 hours
+Source citation accuracy: >= 90% verified citations across AI-generated insights
+User adoption: >= 60% weekly active users of licensed seats within 90 days

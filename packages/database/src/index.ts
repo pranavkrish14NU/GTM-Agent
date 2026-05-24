@@ -97,9 +97,13 @@ export interface Chunk {
   workspace_id: string;
   document_id: string;
   chunk_index: number;
+  /** Raw text of this chunk — stored by WO-020, consumed by WO-022 for embedding. */
+  content: string;
   content_hash: string;
-  /** 1536-element float array (pgvector vector(1536)). */
-  embedding: number[];
+  /** 1536-element float array (pgvector vector(1536)). Null until WO-022 generates it. */
+  embedding: number[] | null;
+  /** True until WO-022 has generated and stored the embedding. */
+  embedding_pending: boolean;
   metadata: Record<string, unknown>;
   created_at: Date;
 }
