@@ -3,6 +3,7 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout/index.js';
+import { ProtectedRoute } from './components/ProtectedRoute/index.js';
 
 const Dashboard = lazy(() => import('./modules/Dashboard/index.js'));
 const Drive = lazy(() => import('./modules/Drive/index.js'));
@@ -15,6 +16,8 @@ const Campaigns = lazy(() => import('./modules/Campaigns/index.js'));
 const Content = lazy(() => import('./modules/Content/index.js'));
 const Analytics = lazy(() => import('./modules/Analytics/index.js'));
 const Settings = lazy(() => import('./modules/Settings/index.js'));
+const SignIn = lazy(() => import('./modules/Auth/SignIn.js'));
+const Callback = lazy(() => import('./modules/Auth/Callback.js'));
 
 function PageLoader() {
   return (
@@ -39,23 +42,42 @@ function withSuspense(element: ReactNode) {
   return <Suspense fallback={<PageLoader />}>{element}</Suspense>;
 }
 
+function withAuth(element: ReactNode) {
+  return withSuspense(<ProtectedRoute>{element}</ProtectedRoute>);
+}
+
 export const router = createBrowserRouter([
+  // ---------------------------------------------------------------------------
+  // Public routes — accessible without authentication
+  // ---------------------------------------------------------------------------
+  {
+    path: '/signin',
+    element: withSuspense(<SignIn />),
+  },
+  {
+    path: '/auth/callback',
+    element: withSuspense(<Callback />),
+  },
+
+  // ---------------------------------------------------------------------------
+  // Protected routes — wrapped with ProtectedRoute
+  // ---------------------------------------------------------------------------
   {
     path: '/',
-    element: <Layout />,
+    element: withAuth(<Layout />),
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
-      { path: 'dashboard', element: withSuspense(<Dashboard />) },
-      { path: 'drive', element: withSuspense(<Drive />) },
-      { path: 'brand', element: withSuspense(<Brand />) },
-      { path: 'personas', element: withSuspense(<Personas />) },
+      { path: 'dashboard',  element: withSuspense(<Dashboard />) },
+      { path: 'drive',      element: withSuspense(<Drive />) },
+      { path: 'brand',      element: withSuspense(<Brand />) },
+      { path: 'personas',   element: withSuspense(<Personas />) },
       { path: 'competitors', element: withSuspense(<Competitors />) },
-      { path: 'ask', element: withSuspense(<Ask />) },
-      { path: 'win-loss', element: withSuspense(<WinLoss />) },
-      { path: 'campaigns', element: withSuspense(<Campaigns />) },
-      { path: 'content', element: withSuspense(<Content />) },
-      { path: 'analytics', element: withSuspense(<Analytics />) },
-      { path: 'settings', element: withSuspense(<Settings />) },
+      { path: 'ask',        element: withSuspense(<Ask />) },
+      { path: 'win-loss',   element: withSuspense(<WinLoss />) },
+      { path: 'campaigns',  element: withSuspense(<Campaigns />) },
+      { path: 'content',    element: withSuspense(<Content />) },
+      { path: 'analytics',  element: withSuspense(<Analytics />) },
+      { path: 'settings',   element: withSuspense(<Settings />) },
     ],
   },
 ]);
