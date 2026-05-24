@@ -23,6 +23,7 @@ import { createWinLossRouter } from './routes/winloss.js';
 import { createContentRouter } from './routes/content.js';
 import { createDriveRouter } from './routes/drive.js';
 import { createCampaignRouter } from './routes/campaigns.js';
+import { createMarketRouter } from './routes/market.js';
 import { AuthService } from './services/auth.service.js';
 import { DriveConnectionService } from './services/drive-connection.service.js';
 import { DocumentService } from './services/document.service.js';
@@ -36,6 +37,7 @@ import { WinLossService } from './services/winloss.service.js';
 import { ContentService } from './services/content.service.js';
 import { ExportService, HttpDriveApiClient } from './services/export.service.js';
 import { CampaignService } from './services/campaign.service.js';
+import { MarketService } from './services/market.service.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
@@ -122,6 +124,10 @@ export function createApp(pool: pg.Pool) {
   // Campaign Planner routes — multi-channel campaign brief generation with email sequences and ad copy.
   const campaignService = new CampaignService(pool, llmGateway);
   app.use('/v1/campaigns', createCampaignRouter(authService, campaignService));
+
+  // Market Intelligence routes — trend extraction, sentiment analysis, emerging topic detection.
+  const marketService = new MarketService(pool, llmGateway);
+  app.use('/v1/market', createMarketRouter(authService, marketService));
 
   // 404 handler.
   app.use((_req, res) => {
