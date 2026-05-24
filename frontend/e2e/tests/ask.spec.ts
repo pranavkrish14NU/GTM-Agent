@@ -11,7 +11,6 @@
 
 import { test, expect } from '@playwright/test';
 import { setupAuthMock, setupAskMock, setupDashboardMock } from '../helpers/mockApi.js';
-import { MOCK_ASK_RESPONSE } from '../helpers/mockData.js';
 
 test.beforeEach(async ({ page }) => {
   await setupAuthMock(page);

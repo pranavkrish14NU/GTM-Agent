@@ -2,7 +2,7 @@
  * Auth module tests — AuthContext, SignIn page, Callback page, ProtectedRoute.
  */
 
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { fireEvent } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -119,6 +119,8 @@ describe('AuthContext', () => {
 
   it('isAuthenticated=true after successful signIn', async () => {
     mockExchangeCode.mockResolvedValue(FIXTURE_CALLBACK_RESPONSE);
+    // signIn now derives the user from the JWT (the API returns no user object).
+    mockDecodeJwtPayload.mockReturnValue(FIXTURE_JWT_PAYLOAD as unknown as Record<string, unknown>);
 
     function SignInConsumer() {
       const { signIn, isAuthenticated, isLoading } = useAuth();
@@ -126,7 +128,7 @@ describe('AuthContext', () => {
         <div>
           <span data-testid="loading">{String(isLoading)}</span>
           <span data-testid="authenticated">{String(isAuthenticated)}</span>
-          <button onClick={() => void signIn('test-code')} data-testid="sign-in">Sign In</button>
+          <button onClick={() => void signIn('test-code', 'state-x', 'http://localhost:5173/auth/callback')} data-testid="sign-in">Sign In</button>
         </div>
       );
     }
@@ -147,7 +149,7 @@ describe('AuthContext', () => {
 
     function TestSignIn() {
       const { signIn } = useAuth();
-      return <button onClick={() => void signIn('code')} data-testid="sign-in">Sign In</button>;
+      return <button onClick={() => void signIn('code', 'state-x', 'http://localhost:5173/auth/callback')} data-testid="sign-in">Sign In</button>;
     }
 
     renderWithAuth(<TestSignIn />);
@@ -161,13 +163,14 @@ describe('AuthContext', () => {
   it('clears token on signOut via clearToken', async () => {
     mockExchangeCode.mockResolvedValue(FIXTURE_CALLBACK_RESPONSE);
     mockLogout.mockResolvedValue(undefined);
+    mockDecodeJwtPayload.mockReturnValue(FIXTURE_JWT_PAYLOAD as unknown as Record<string, unknown>);
 
     function TestSignOut() {
       const { signIn, signOut, isAuthenticated } = useAuth();
       return (
         <div>
           <span data-testid="authenticated">{String(isAuthenticated)}</span>
-          <button onClick={() => void signIn('code')} data-testid="sign-in">Sign In</button>
+          <button onClick={() => void signIn('code', 'state-x', 'http://localhost:5173/auth/callback')} data-testid="sign-in">Sign In</button>
           <button onClick={() => void signOut()} data-testid="sign-out">Sign Out</button>
         </div>
       );
@@ -216,7 +219,7 @@ describe('AuthContext', () => {
         <div>
           <span data-testid="loading">{String(isLoading)}</span>
           <span data-testid="error">{error ?? 'null'}</span>
-          <button onClick={() => signIn('bad-code').catch(() => null)} data-testid="sign-in">Sign In</button>
+          <button onClick={() => signIn('bad-code', 'state-x', 'http://localhost:5173/auth/callback').catch(() => null)} data-testid="sign-in">Sign In</button>
         </div>
       );
     }

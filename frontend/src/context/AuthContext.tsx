@@ -134,13 +134,15 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
 
   /** Exchange a Google OAuth code for a BOBA access token. */
   const signIn = useCallback(
-    async (code: string) => {
+    async (code: string, state: string, redirectUri: string) => {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await exchangeCodeForToken(code);
+        const res = await exchangeCodeForToken(code, state, redirectUri);
         storeToken(res.access_token);
-        setUser(res.user);
+        // The API derives identity from the signed JWT and returns no user
+        // object, so decode it from the token — same as the refresh path.
+        setUser(userFromToken(res.access_token));
         scheduleRefresh(res.access_token, doRefresh);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Sign-in failed');

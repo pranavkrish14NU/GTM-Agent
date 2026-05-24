@@ -75,6 +75,19 @@ jobs:
         run: npm ci
 
       # -----------------------------------------------------------------------
+      # Build shared workspace packages so backend/api can resolve their
+      # compiled types (@boba/*). Without this, `tsc --noEmit` fails with
+      # TS2307 because the packages' "types" point at dist/ which is unbuilt.
+      # -----------------------------------------------------------------------
+      - name: Build shared packages
+        run: >-
+          npm run build
+          --workspace packages/database
+          --workspace packages/drive-connector
+          --workspace packages/llm-gateway
+          --workspace packages/logger
+
+      # -----------------------------------------------------------------------
       # TypeScript check
       # -----------------------------------------------------------------------
       - name: TypeScript type check

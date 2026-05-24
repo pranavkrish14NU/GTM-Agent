@@ -161,14 +161,13 @@ export class AuthService {
    */
   async handleCallback(
     code: string,
-    state: string,
+    _state: string,
     redirectUri?: string,
   ): Promise<AuthTokens & { userId: string; workspaceId: string }> {
-    // Decode state to recover code_verifier (embedded at login time).
-    const statePayload = JSON.parse(
-      Buffer.from(state, 'base64url').toString('utf8'),
-    ) as { cv: string };
-    const _codeVerifier = statePayload.cv;  // would be sent to Google in PKCE-aware exchange
+    // `state` is an opaque CSRF token: the SPA generates it, stores it, and
+    // verifies the round-trip value client-side before this call. The server
+    // treats it as opaque and does not parse it. (Server-issued PKCE state is
+    // produced by buildAuthorizationUrl for flows that exchange server-side.)
 
     const tokenResponse = await this.googleTokenFetcher(
       code,

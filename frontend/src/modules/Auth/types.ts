@@ -27,7 +27,12 @@ export interface AuthCallbackResponse {
   access_token: string;
   token_type: 'Bearer';
   expires_in: number;   // seconds
-  user: User;
+  /**
+   * The API derives the user from the signed JWT and does not return a user
+   * object on this endpoint; the client decodes it from access_token instead.
+   * Optional so fixtures/other transports may still include it.
+   */
+  user?: User;
 }
 
 export interface AuthRefreshResponse {
@@ -51,8 +56,9 @@ export interface AuthContextValue {
   /**
    * Exchange a Google OAuth authorization code for a BOBA JWT.
    * Called from the /auth/callback route after the OAuth redirect.
+   * `state` and `redirectUri` must match the values used at authorize time.
    */
-  signIn: (code: string) => Promise<void>;
+  signIn: (code: string, state: string, redirectUri: string) => Promise<void>;
   /** Clear the in-memory JWT and sign the user out via the backend. */
   signOut: () => Promise<void>;
 }

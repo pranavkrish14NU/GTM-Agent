@@ -4,22 +4,17 @@
  * Clicking the button redirects the browser to Google's OAuth consent screen.
  * After the user grants access, Google redirects to /auth/callback with a code.
  *
- * The Google OAuth redirect URI and client_id are read from Vite env vars:
- *   VITE_GOOGLE_CLIENT_ID
- *   VITE_OAUTH_REDIRECT_URI (defaults to <origin>/auth/callback)
+ * The Google OAuth redirect URI and client_id come from the shared oauthConfig
+ * module (read from Vite env vars), so SignIn and Callback stay in lock-step.
  */
 
-/// <reference types="vite/client" />
-
 import styles from './SignIn.module.css';
-
-const CLIENT_ID = (import.meta.env['VITE_GOOGLE_CLIENT_ID'] as string | undefined) ?? '';
-const REDIRECT_URI =
-  (import.meta.env['VITE_OAUTH_REDIRECT_URI'] as string | undefined) ??
-  `${window.location.origin}/auth/callback`;
-
-const GOOGLE_OAUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
-const SCOPES = 'openid profile email';
+import {
+  GOOGLE_CLIENT_ID,
+  OAUTH_REDIRECT_URI,
+  GOOGLE_OAUTH_URL,
+  OAUTH_SCOPES,
+} from './oauthConfig.js';
 
 /**
  * Generate a cryptographically random OAuth state value (RFC 6749 §10.12).
@@ -38,10 +33,10 @@ function buildGoogleOAuthUrl(): string {
   sessionStorage.setItem('oauth_state', state);
 
   const params = new URLSearchParams({
-    client_id: CLIENT_ID,
-    redirect_uri: REDIRECT_URI,
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: OAUTH_REDIRECT_URI,
     response_type: 'code',
-    scope: SCOPES,
+    scope: OAUTH_SCOPES,
     access_type: 'offline',
     prompt: 'consent',
     state,
