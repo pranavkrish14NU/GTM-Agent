@@ -1,0 +1,63 @@
+# Cloud Build config — canary health check verification job.
+#
+# Cloud Deploy can also invoke this via a `verify` Cloud Build substitution
+# when the skaffold verify container approach is not preferred. Either works.
+#
+# Triggered automatically by Cloud Deploy after each canary phase when
+# `verify: true` is set in clouddeploy.yaml.
+#
+# Substitutions provided by Cloud Deploy:
+#   $_RELEASE_NAME     — Cloud Deploy release name
+#   $_ROLLOUT_NAME     — Rollout name
+#   $_TARGET_ID        — Target ID (boba-production)
+#   $_PHASE_ID         — Current canary phase (canary-10, canary-50, stable)
+
+timeout: 900s   # 15-minute timeout (10-min window + buffer)
+
+steps:
+# ─────────────────────────────────────────────────────────────────────────────
+# Step 1: Wait for the canary window to elapse before evaluating metrics.
+# The canary traffic runs for 10 minutes before we sample Cloud Monitoring.
+# ─────────────────────────────────────────────────────────────────────────────
+- name: alpine
+  entrypoint: sh
+  args:
+  - -c
+  - |
+    echo "Canary phase: ${_PHASE_ID}"
+    echo "Waiting 600 seconds (10 minutes) for metrics to accumulate..."
+    sleep 600
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Step 2: Run the health check script using the Cloud SDK image.
+# ─────────────────────────────────────────────────────────────────────────────
+- name: google/cloud-sdk:alpine
+  entrypoint: sh
+  env:
+  - GCP_PROJECT=$PROJECT_ID
+  - SERVICE_NAME=boba-api
+  - ERROR_RATE_THRESHOLD=0.01
+  - LATENCY_P95_THRESHOLD_MS=2000
+  - WINDOW_MINUTES=10
+  args:
+  - deploy/verify/check-canary-health.sh
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Step 3: Emit a structured result for observability.
+# ─────────────────────────────────────────────────────────────────────────────
+- name: alpine
+  entrypoint: sh
+  args:
+  - -c
+  - |
+    echo "Verification complete for release=${_RELEASE_NAME} phase=${_PHASE_ID}"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_MEDIUM
+
+substitutions:
+  _RELEASE_NAME: ""
+  _ROLLOUT_NAME: ""
+  _TARGET_ID: boba-production
+  _PHASE_ID: ""

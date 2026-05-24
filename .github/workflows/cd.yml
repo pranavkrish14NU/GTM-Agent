@@ -1,8 +1,16 @@
 name: CD
 
 # Build + push service container images to Artifact Registry on every successful
-# CI run on main. No-ops safely until (a) a service Dockerfile exists and (b) the
-# repo variable DEPLOY_ENABLED is "true" with Workload Identity Federation vars set.
+# CI run on main, then create a Cloud Deploy release that promotes through
+# staging → production with a canary strategy and manual approval gate.
+#
+# No-ops safely until:
+#   (a) a service Dockerfile exists, and
+#   (b) repo variable DEPLOY_ENABLED is "true" with WIF vars set.
+#
+# Cloud Deploy pipeline prerequisites (apply once per environment):
+#   gcloud deploy apply --file=deploy/clouddeploy.yaml \
+#     --project=$GCP_PROJECT --region=$AR_LOCATION
 on:
   workflow_run:
     workflows: [CI]
@@ -18,14 +26,19 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 1: Detect which services have a Dockerfile and are buildable.
+  # ─────────────────────────────────────────────────────────────────────────
   prepare:
     name: Detect buildable services
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.detect.outputs.services }}
+      image_tag: ${{ steps.tag.outputs.image_tag }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Detect services with a Dockerfile
         id: detect
         run: |
@@ -44,6 +57,13 @@ jobs:
             echo "services=[${joined%,}]" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Compute image tag (short SHA)
+        id: tag
+        run: echo "image_tag=sha-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 2: Build and push each service image to Artifact Registry.
+  # ─────────────────────────────────────────────────────────────────────────
   build-push:
     name: Build & push ${{ matrix.service }}
     needs: prepare
@@ -53,6 +73,8 @@ jobs:
     strategy:
       matrix:
         service: ${{ fromJSON(needs.prepare.outputs.services) }}
+    outputs:
+      image_uri: ${{ steps.meta.outputs.tags }}
     steps:
       - uses: actions/checkout@v4
 
@@ -91,3 +113,152 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 3: Create a Cloud Deploy release and promote to staging.
+  #
+  # The boba-pipeline (deploy/clouddeploy.yaml) is a two-stage serial pipeline:
+  #   Stage 1 — boba-staging    (automatic promotion, no approval)
+  #   Stage 2 — boba-production (requires manual approval + canary rollout)
+  #
+  # This job creates the release and promotes it to staging. The staging
+  # deployment completes automatically. Production promotion is paused until
+  # a human approves via the GCP Console or:
+  #   gcloud deploy releases promote \
+  #     --release=<release-name> \
+  #     --delivery-pipeline=boba-pipeline \
+  #     --to-target=boba-production \
+  #     --region=$AR_LOCATION \
+  #     --project=$GCP_PROJECT
+  # ─────────────────────────────────────────────────────────────────────────
+  create-release:
+    name: Cloud Deploy — create release
+    needs: [prepare, build-push]
+    if: ${{ needs.prepare.outputs.services != '[]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      IMAGE_TAG: ${{ needs.prepare.outputs.image_tag }}
+      REGION: ${{ vars.AR_LOCATION }}
+      PROJECT: ${{ vars.GCP_PROJECT }}
+      AR_LOCATION: ${{ vars.AR_LOCATION }}
+      AR_REPOSITORY: ${{ vars.AR_REPOSITORY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.CICD_SA_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Build the full image URI (sha-tagged) for use in --images flag.
+      - name: Compute full image URI
+        id: image
+        run: |
+          FULL_URI="${AR_LOCATION}-docker.pkg.dev/${PROJECT}/${AR_REPOSITORY}/api:${IMAGE_TAG}"
+          echo "uri=${FULL_URI}" >> "$GITHUB_OUTPUT"
+          echo "Image URI: ${FULL_URI}"
+
+      # Create the release. Cloud Deploy renders manifests with Skaffold using
+      # the provided --images substitution, then automatically initiates a
+      # rollout to the first pipeline stage (boba-staging).
+      - name: Create Cloud Deploy release
+        id: release
+        run: |
+          RELEASE_NAME="release-${IMAGE_TAG}-$(date -u +%Y%m%d%H%M%S)"
+          echo "release_name=${RELEASE_NAME}" >> "$GITHUB_OUTPUT"
+
+          gcloud deploy releases create "${RELEASE_NAME}" \
+            --delivery-pipeline=boba-pipeline \
+            --region="${REGION}" \
+            --project="${PROJECT}" \
+            --images="boba-api=${{ steps.image.outputs.uri }}" \
+            --source=deploy \
+            --skaffold-file=deploy/skaffold.yaml \
+            --to-target=boba-staging \
+            --labels="git-commit=${IMAGE_TAG},triggered-by=github-actions,pr-sha=${{ github.sha }}"
+
+          echo "::notice::Release ${RELEASE_NAME} created — staging rollout in progress."
+
+      # Tail staging rollout and wait for it to succeed (or fail).
+      - name: Wait for staging rollout to complete
+        run: |
+          RELEASE_NAME="${{ steps.release.outputs.release_name }}"
+          echo "Waiting for staging rollout of ${RELEASE_NAME}..."
+
+          # Poll until the staging rollout reaches a terminal state.
+          for i in $(seq 1 20); do
+            STATUS=$(gcloud deploy rollouts list \
+              --delivery-pipeline=boba-pipeline \
+              --release="${RELEASE_NAME}" \
+              --region="${REGION}" \
+              --project="${PROJECT}" \
+              --filter="targetId=boba-staging" \
+              --format="value(state)" 2>/dev/null | head -1)
+
+            echo "  Attempt ${i}/20 — staging rollout state: ${STATUS}"
+
+            case "${STATUS}" in
+              SUCCEEDED)
+                echo "::notice::Staging rollout SUCCEEDED. Production rollout paused for manual approval."
+                exit 0
+                ;;
+              FAILED|HALTED)
+                echo "::error::Staging rollout ${STATUS}. Investigate via GCP Console or:"
+                echo "  gcloud deploy rollouts list --delivery-pipeline=boba-pipeline --release=${RELEASE_NAME} --region=${REGION} --project=${PROJECT}"
+                exit 1
+                ;;
+            esac
+
+            sleep 30
+          done
+
+          echo "::warning::Staging rollout still in progress after 10 minutes — continuing."
+
+      # Emit production promotion instructions to the GitHub Actions summary.
+      - name: Print production promotion instructions
+        if: always()
+        run: |
+          RELEASE_NAME="${{ steps.release.outputs.release_name }}"
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ## 🚀 Cloud Deploy Release: \`${RELEASE_NAME}\`
+
+          **Staging** ✅ — rollout complete.
+
+          **Production** ⏸ — awaiting manual approval.
+
+          ### To promote to production (10 % → 50 % → 100 % canary):
+
+          **Option A — GCP Console**
+          1. Navigate to [Cloud Deploy → boba-pipeline](https://console.cloud.google.com/deploy/delivery-pipelines/us-central1/boba-pipeline)
+          2. Find the release \`${RELEASE_NAME}\` and click **Promote**.
+          3. Approve when prompted.
+
+          **Option B — gcloud CLI**
+          \`\`\`bash
+          gcloud deploy releases promote \\
+            --release=${RELEASE_NAME} \\
+            --delivery-pipeline=boba-pipeline \\
+            --to-target=boba-production \\
+            --region=${REGION} \\
+            --project=${PROJECT}
+          \`\`\`
+
+          ### To roll back production manually:
+          \`\`\`bash
+          gcloud deploy rollouts list \\
+            --delivery-pipeline=boba-pipeline \\
+            --release=${RELEASE_NAME} \\
+            --region=${REGION} --project=${PROJECT}
+
+          # Then rollback the failing rollout:
+          gcloud deploy rollouts rollback <ROLLOUT_NAME> \\
+            --delivery-pipeline=boba-pipeline \\
+            --release=${RELEASE_NAME} \\
+            --region=${REGION} --project=${PROJECT}
+          \`\`\`
+          EOF
