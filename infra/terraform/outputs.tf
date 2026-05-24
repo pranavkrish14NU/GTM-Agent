@@ -137,3 +137,14 @@ output "monitoring_email_channel_id" {
   description = "Resource ID of the email alert notification channel."
   value       = module.monitoring.email_notification_channel_id
 }
+
+# GitHub Actions Workload Identity Federation (set as GitHub repo variables)
+output "wif_provider_name" {
+  description = "WIF pool provider name — set as WIF_PROVIDER GitHub Actions variable."
+  value       = module.github_wif.pool_provider_name
+}
+
+output "ci_cd_deployer_sa_email" {
+  description = "CI/CD deployer service account email — set as CICD_SA_EMAIL GitHub Actions variable."
+  value       = module.iam.ci_cd_deployer_sa_email
+}

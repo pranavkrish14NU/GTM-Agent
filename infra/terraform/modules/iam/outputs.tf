@@ -22,3 +22,8 @@ output "ci_cd_deployer_sa_email" {
   description = "CI/CD deployer service account email."
   value       = google_service_account.this["ci-cd-deployer"].email
 }
+
+output "service_account_ids" {
+  description = "Map of service boundary -> fully-qualified service account resource ID (for WIF bindings)."
+  value       = { for key, sa in google_service_account.this : key => sa.id }
+}

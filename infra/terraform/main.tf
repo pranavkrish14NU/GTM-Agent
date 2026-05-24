@@ -167,6 +167,17 @@ module "secrets_kms" {
   depends_on = [module.project_services, module.iam]
 }
 
+module "github_wif" {
+  source = "./modules/github-wif"
+
+  project_id           = var.project_id
+  environment          = var.environment
+  github_repository    = var.github_repository
+  ci_cd_deployer_sa_id = module.iam.service_account_ids["ci-cd-deployer"]
+
+  depends_on = [module.project_services, module.iam]
+}
+
 module "logging" {
   source = "./modules/logging"
 
