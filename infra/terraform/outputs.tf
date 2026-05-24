@@ -117,3 +117,23 @@ output "error_rate_metric" {
   description = "Cloud Logging log-based metric name for error rate per service."
   value       = module.logging.error_rate_metric_name
 }
+
+output "monitoring_api_availability_slo" {
+  description = "Full resource name of the API Availability (99.9%) SLO."
+  value       = module.monitoring.api_availability_slo_id
+}
+
+output "monitoring_api_latency_slo" {
+  description = "Full resource name of the API Latency p95 (<500ms) SLO."
+  value       = module.monitoring.api_latency_slo_id
+}
+
+output "monitoring_search_latency_slo" {
+  description = "Full resource name of the Search Latency p95 (<2s) SLO."
+  value       = module.monitoring.search_latency_slo_id
+}
+
+output "monitoring_email_channel_id" {
+  description = "Resource ID of the email alert notification channel."
+  value       = module.monitoring.email_notification_channel_id
+}

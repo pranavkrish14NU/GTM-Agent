@@ -176,3 +176,19 @@ module "logging" {
 
   depends_on = [module.project_services]
 }
+
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  project_id  = var.project_id
+  environment = var.environment
+  region      = var.region
+
+  notification_email = var.monitoring_notification_email
+  slack_channel_name = var.monitoring_slack_channel_name
+  slack_auth_token   = var.monitoring_slack_auth_token
+
+  # Monitoring dashboards and SLOs are meaningful only once GKE, Cloud SQL,
+  # Cloud Tasks, and the Cloud LB are live — express the dependency.
+  depends_on = [module.project_services, module.gke, module.cloud_sql, module.cloud_tasks]
+}
