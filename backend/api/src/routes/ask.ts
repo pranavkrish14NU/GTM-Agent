@@ -61,7 +61,7 @@ export function createAskRouter(
       try {
         const result = await askService.ask(
           req.user!.workspace_id,
-          req.user!.sub,
+          req.user!.user_id,
           query.trim(),
           conversation_id,
         );
@@ -96,7 +96,7 @@ export function createAskRouter(
       try {
         const result = await askService.getHistory(
           req.user!.workspace_id,
-          req.user!.sub,
+          req.user!.user_id,
           page,
           pageSize,
         );

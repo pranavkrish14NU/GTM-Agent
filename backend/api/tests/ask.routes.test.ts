@@ -28,7 +28,7 @@ import { FIXTURE_ASK_RESPONSE, FIXTURE_HISTORY_RESULT } from './fixtures/ask.js'
 function makeAuthService(role = 'viewer') {
   return {
     verifyJwt: vi.fn().mockResolvedValue({
-      sub: 'user-001',
+      user_id: 'user-001',
       workspace_id: 'ws-001',
       role,
     }),
@@ -101,6 +101,7 @@ describe('POST /v1/ask', () => {
       .send({ query: 'Brand voice?', conversation_id: 'conv-existing' });
 
     expect(askService.ask).toHaveBeenCalledWith('ws-001', 'user-001', 'Brand voice?', 'conv-existing');
+
   });
 
   it('returns 400 when query is missing', async () => {
@@ -213,6 +214,7 @@ describe('GET /v1/ask/history', () => {
       .set('Authorization', 'Bearer valid-token');
 
     expect(askService.getHistory).toHaveBeenCalledWith('ws-001', 'user-001', 2, 10);
+
   });
 
   it('caps pageSize at 100', async () => {
