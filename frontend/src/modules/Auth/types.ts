@@ -59,6 +59,8 @@ export interface AuthContextValue {
    * `state` and `redirectUri` must match the values used at authorize time.
    */
   signIn: (code: string, state: string, redirectUri: string) => Promise<void>;
+  /** DEV ONLY — sign in as a seeded user without Google (backend gated to non-prod). */
+  devSignIn: () => Promise<void>;
   /** Clear the in-memory JWT and sign the user out via the backend. */
   signOut: () => Promise<void>;
 }

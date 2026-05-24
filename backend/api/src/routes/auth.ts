@@ -71,6 +71,42 @@ export function createAuthRouter(authService: AuthService): Router {
   });
 
   // -------------------------------------------------------------------------
+  // POST /v1/auth/dev-login   (development only)
+  // Issues a real session (JWT + refresh cookie) for a seeded user without the
+  // Google handshake. Hard-disabled in production. Body: { email? }.
+  // -------------------------------------------------------------------------
+  router.post('/dev-login', async (req: Request, res: Response): Promise<void> => {
+    if (config.nodeEnv === 'production') {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+    const { email } = (req.body ?? {}) as { email?: string };
+    const targetEmail = email && email.trim() ? email.trim() : 'owner@acme-dev.example.com';
+
+    try {
+      const { accessToken, refreshToken, expiresIn } =
+        await authService.devIssueTokens(targetEmail);
+
+      res.cookie(config.refreshToken.cookieName, refreshToken, {
+        httpOnly: true,
+        secure: config.nodeEnv !== 'development',
+        sameSite: 'strict',
+        maxAge: config.refreshToken.ttlSeconds * 1000,
+        path: '/v1/auth',
+      });
+
+      res.json({
+        access_token: accessToken,
+        token_type: 'Bearer',
+        expires_in: expiresIn,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'dev-login failed';
+      res.status(401).json({ error: message });
+    }
+  });
+
+  // -------------------------------------------------------------------------
   // POST /v1/auth/refresh
   // Reads refresh token from HttpOnly cookie, rotates it, returns new JWT.
   // -------------------------------------------------------------------------

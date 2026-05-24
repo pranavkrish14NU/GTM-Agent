@@ -88,6 +88,18 @@ export function exchangeCodeForToken(
 }
 
 /**
+ * DEV ONLY — sign in as a seeded user without the Google handshake.
+ * Backend route is hard-disabled in production (404).
+ */
+export function devLogin(): Promise<AuthCallbackResponse> {
+  return authRequest<AuthCallbackResponse>('/v1/auth/dev-login', {
+    method: 'POST',
+    body: JSON.stringify({}),
+    credentials: 'include', // accept the HttpOnly refresh-token cookie
+  });
+}
+
+/**
  * Silently refresh the access token using the HttpOnly refresh-token cookie.
  * Called automatically before the current access token expires.
  */
