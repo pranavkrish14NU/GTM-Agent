@@ -1,0 +1,130 @@
+/* ==========================================================================
+   Win/Loss Analysis — patterns, objection trends, competitor matrix
+   ========================================================================== */
+
+.page { padding: 1.5rem; max-width: 1280px; margin: 0 auto; }
+
+.pageHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+.pageTitle { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0; }
+.pageSubtitle { font-size: 0.875rem; color: #64748b; margin: 0.25rem 0 0; }
+
+.headerActions { display: flex; align-items: center; gap: 0.75rem; }
+.lastUpdated { font-size: 0.75rem; color: #94a3b8; }
+
+.analyzeButton {
+  display: inline-flex; align-items: center; gap: 0.375rem;
+  padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500;
+  color: #ffffff; background: #6366f1; border: none; border-radius: 0.375rem;
+  cursor: pointer;
+}
+.analyzeButton:hover:not(:disabled) { background: #4f46e5; }
+.analyzeButton:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.errorBanner { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 0.5rem; padding: 1rem 1.25rem; color: #991b1b; font-size: 0.875rem; margin-bottom: 1.5rem; }
+
+/* --------------------------------------------------------------------------
+   Summary row
+   -------------------------------------------------------------------------- */
+
+.summaryRow { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+
+.summaryCard {
+  background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem;
+  padding: 1.25rem; display: flex; flex-direction: column; gap: 0.25rem;
+}
+
+.summaryLabel { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #94a3b8; }
+.summaryValue { font-size: 2rem; font-weight: 700; color: #0f172a; line-height: 1; }
+.summarySubtext { font-size: 0.75rem; color: #64748b; }
+
+/* --------------------------------------------------------------------------
+   Section layout
+   -------------------------------------------------------------------------- */
+
+.section { margin-bottom: 2rem; }
+.sectionHeading { font-size: 1rem; font-weight: 600; color: #0f172a; margin: 0 0 0.75rem; }
+
+/* --------------------------------------------------------------------------
+   Deal patterns
+   -------------------------------------------------------------------------- */
+
+.patternGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+
+.patternCard {
+  background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+
+.patternName { font-size: 0.9375rem; font-weight: 600; color: #0f172a; margin: 0; }
+.patternDescription { font-size: 0.8125rem; color: #64748b; line-height: 1.5; margin: 0; }
+
+.patternStats { display: flex; gap: 1rem; }
+.patternStat { display: flex; flex-direction: column; gap: 0.125rem; }
+.patternStatValue { font-size: 1.125rem; font-weight: 700; color: #0f172a; }
+.patternStatLabel { font-size: 0.6875rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* --------------------------------------------------------------------------
+   Objection trends
+   -------------------------------------------------------------------------- */
+
+.objectionList { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.objectionCard {
+  background: #ffffff; border: 1px solid #e2e8f0; border-left-width: 3px;
+  border-radius: 0.5rem; padding: 1rem 1.25rem;
+}
+
+.objectionHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
+.objectionText { font-size: 0.9375rem; font-weight: 600; color: #0f172a; margin: 0; flex: 1; }
+
+.frequencyBadge { padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.frequencyBadge.high   { background: #fee2e2; color: #991b1b; }
+.frequencyBadge.medium { background: #fff7ed; color: #9a3412; }
+.frequencyBadge.low    { background: #f0fdf4; color: #166534; }
+
+.objectionPersonas { font-size: 0.75rem; color: #64748b; }
+.objectionDealsLost { font-size: 0.75rem; color: #ef4444; font-weight: 600; }
+
+/* --------------------------------------------------------------------------
+   Competitor involvement matrix
+   -------------------------------------------------------------------------- */
+
+.competitorTable { width: 100%; border-collapse: collapse; font-size: 0.875rem; background: #ffffff; border-radius: 0.75rem; overflow: hidden; border: 1px solid #e2e8f0; }
+.competitorTable th { text-align: left; padding: 0.75rem 1rem; color: #475569; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+.competitorTable td { padding: 0.875rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+.competitorTable tr:last-child td { border-bottom: none; }
+
+.competitorName { font-weight: 600; color: #0f172a; }
+
+.threatBadge { display: inline-flex; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+
+.winRateBar { display: flex; align-items: center; gap: 0.5rem; }
+.winRateValue { font-weight: 600; color: #0f172a; font-size: 0.875rem; min-width: 36px; }
+.winRateTrack { flex: 1; height: 6px; background: #e2e8f0; border-radius: 9999px; overflow: hidden; min-width: 80px; }
+.winRateFill { height: 100%; border-radius: 9999px; background: #22c55e; }
+
+/* --------------------------------------------------------------------------
+   Corrective actions
+   -------------------------------------------------------------------------- */
+
+.actionList { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.actionCard {
+  background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+
+.actionIssue { font-size: 0.9375rem; font-weight: 600; color: #0f172a; margin: 0; }
+.actionRecommendation { font-size: 0.8125rem; color: #64748b; line-height: 1.5; margin: 0; }
+.actionMeta { display: flex; gap: 0.5rem; }
+.actionTag { padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.actionTag.high { background: #fee2e2; color: #991b1b; }
+.actionTag.medium { background: #fff7ed; color: #9a3412; }
+.actionTag.low { background: #f0fdf4; color: #166534; }
+
+/* --------------------------------------------------------------------------
+   Loading skeleton
+   -------------------------------------------------------------------------- */
+
+.skeletonGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.skeletonCard { background: #f1f5f9; border-radius: 0.75rem; padding: 1.25rem; min-height: 120px; }
