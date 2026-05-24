@@ -1,0 +1,456 @@
+/* ==========================================================================
+   Brand Intelligence — Voice analysis, consistency score, drift alerts
+   ========================================================================== */
+
+.page {
+  padding: 1.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   Page header
+   -------------------------------------------------------------------------- */
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.pageSubtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0.25rem 0 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lastUpdated {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.analyzeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ffffff;
+  background: #6366f1;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.analyzeButton:hover:not(:disabled) {
+  background: #4f46e5;
+}
+
+.analyzeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   Summary row: consistency gauge + voice profile side-by-side
+   -------------------------------------------------------------------------- */
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .summaryRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Consistency score gauge
+   -------------------------------------------------------------------------- */
+
+.gaugeCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 180px;
+}
+
+.gaugeTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+  text-align: center;
+}
+
+.gaugeWrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.gaugeSvg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.gaugeTrack {
+  fill: none;
+  stroke: #f1f5f9;
+  stroke-width: 10;
+}
+
+.gaugeFill {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.6s ease;
+}
+
+.gaugeFill.high  { stroke: #22c55e; }
+.gaugeFill.medium { stroke: #f59e0b; }
+.gaugeFill.low   { stroke: #ef4444; }
+
+.gaugeLabel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.gaugeValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.gaugeUnit {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.gaugeMeta {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Voice Profile card
+   -------------------------------------------------------------------------- */
+
+.voiceCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.sectionHeading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 1rem;
+}
+
+.voiceGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 480px) {
+  .voiceGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.voiceRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.voiceLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.toneChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  background: #ede9fe;
+  color: #5b21b6;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.toneDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7c3aed;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.tag {
+  padding: 0.1875rem 0.5rem;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+/* --------------------------------------------------------------------------
+   Positioning themes
+   -------------------------------------------------------------------------- */
+
+.themesSection {
+  margin-bottom: 2rem;
+}
+
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.themeCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.themeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.themeName {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.themeConfidenceBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.themeDesc {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.themeDocCount {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* --------------------------------------------------------------------------
+   Drift alerts
+   -------------------------------------------------------------------------- */
+
+.driftSection {
+  margin-bottom: 2rem;
+}
+
+.driftList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.driftAlert {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left-width: 3px;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+}
+
+.driftAlert.critical { border-left-color: #ef4444; }
+.driftAlert.warning  { border-left-color: #f59e0b; }
+.driftAlert.info     { border-left-color: #3b82f6; }
+
+.driftHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.driftDocTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.driftScore {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.driftScore.critical { color: #dc2626; }
+.driftScore.warning  { color: #d97706; }
+.driftScore.info     { color: #2563eb; }
+
+.driftTypes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.deviationType {
+  padding: 0.125rem 0.5rem;
+  background: #fff7ed;
+  color: #9a3412;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.driftSuggestion {
+  font-size: 0.8125rem;
+  color: #475569;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Sources / citations
+   -------------------------------------------------------------------------- */
+
+.sourcesSection {
+  margin-bottom: 2rem;
+}
+
+.sourceList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sourceItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+.sourceName {
+  font-size: 0.875rem;
+  color: #0f172a;
+}
+
+.sourceRelevance {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #22c55e;
+}
+
+/* --------------------------------------------------------------------------
+   Loading skeleton
+   -------------------------------------------------------------------------- */
+
+.skeletonGaugeSection {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.skeletonGauge {
+  min-width: 180px;
+  background: #f1f5f9;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.skeletonVoice {
+  background: #f1f5f9;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Error state
+   -------------------------------------------------------------------------- */
+
+.errorBanner {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  color: #991b1b;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
