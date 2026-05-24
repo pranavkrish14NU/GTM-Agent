@@ -96,3 +96,22 @@ module "cloud_sql" {
   # Cloud SQL private IP requires the service networking connection from WO-001.
   depends_on = [module.project_services, module.networking, module.iam]
 }
+
+module "redis" {
+  source = "./modules/redis"
+
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+
+  network        = module.networking.network_self_link
+  memory_size_gb = var.redis_memory_size_gb
+
+  secret_accessor_members = [
+    "serviceAccount:${module.iam.api_gateway_sa_email}",
+    "serviceAccount:${module.iam.worker_pods_sa_email}",
+  ]
+
+  # Redis private service access requires the WO-001 service networking connection.
+  depends_on = [module.project_services, module.networking, module.iam]
+}

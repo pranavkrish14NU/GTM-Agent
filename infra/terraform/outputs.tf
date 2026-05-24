@@ -67,3 +67,13 @@ output "cloud_sql_credentials_secret" {
   description = "Secret Manager secret ID holding DB credentials."
   value       = module.cloud_sql.credentials_secret_id
 }
+
+output "redis_host" {
+  description = "Redis private IP."
+  value       = module.redis.host
+}
+
+output "redis_credentials_secret" {
+  description = "Secret Manager secret ID holding Redis host/port/AUTH."
+  value       = module.redis.credentials_secret_id
+}

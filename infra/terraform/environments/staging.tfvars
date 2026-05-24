@@ -25,3 +25,6 @@ gke_master_authorized_networks = [
 # Cloud SQL (WO-003)
 cloud_sql_tier                = "db-custom-2-7680"
 cloud_sql_deletion_protection = false
+
+# Redis (WO-004)
+redis_memory_size_gb = 2
