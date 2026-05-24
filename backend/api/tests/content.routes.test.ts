@@ -80,13 +80,20 @@ function makeContentService(opts?: {
   };
 }
 
+// Minimal mock ExportService — content route tests don't test export endpoint
+const mockExportService = {
+  exportDraft: vi.fn().mockResolvedValue({}),
+  getExportStatus: vi.fn().mockResolvedValue(null),
+  getDriveFolders: vi.fn().mockResolvedValue([]),
+};
+
 function buildApp(
   authService: ReturnType<typeof makeAuthService>,
   contentService: MockContentService,
 ) {
   const app = express();
   app.use(express.json());
-  app.use('/v1/content', createContentRouter(authService as never, contentService as never));
+  app.use('/v1/content', createContentRouter(authService as never, contentService as never, mockExportService as never));
   return app;
 }
 
