@@ -1,0 +1,31 @@
+# syntax=docker/dockerfile:1
+# Multi-stage build for the BOBA API service (Node/TypeScript).
+# Build context is the repo ROOT so the npm workspace + root lockfile resolve.
+#   docker build -f backend/api/Dockerfile -t <img> .
+
+# ---- build stage: compile TypeScript ----
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY backend/api/package.json ./backend/api/package.json
+RUN npm ci --include-workspace-root --workspace backend/api
+COPY . .
+RUN npm run build --workspace backend/api
+
+# ---- deps stage: production-only node_modules ----
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY backend/api/package.json ./backend/api/package.json
+RUN npm ci --omit=dev --include-workspace-root --workspace backend/api
+
+# ---- runtime: distroless, non-root, no shell ----
+FROM gcr.io/distroless/nodejs20-debian12:nonroot AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app/backend/api/dist ./backend/api/dist
+COPY --from=build /app/backend/api/package.json ./backend/api/package.json
+USER nonroot
+EXPOSE 8080
+CMD ["backend/api/dist/index.js"]
