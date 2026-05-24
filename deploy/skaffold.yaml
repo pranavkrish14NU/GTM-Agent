@@ -1,0 +1,151 @@
+# Skaffold configuration for Cloud Deploy.
+#
+# Cloud Deploy uses Skaffold to render Kubernetes manifests and drive
+# deployments. This file is the single entry point for the boba-pipeline.
+#
+# Profiles:
+#   staging    — values-staging.yaml overrides
+#   production — values-prod.yaml overrides
+#
+# Image placeholders (IMAGE_TAG_boba_api, IMAGE_REPOSITORY_boba_api) are
+# substituted at release-creation time by gcloud deploy releases create
+# --images=boba-api=<full-image-uri>.
+
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: boba
+
+build:
+  # Images are pre-built by the CD pipeline (cd.yml) and pushed to Artifact
+  # Registry before Cloud Deploy is invoked. Skaffold does not build here.
+  artifacts:
+  - image: boba-api
+    context: .
+    docker:
+      dockerfile: backend/api/Dockerfile
+  tagPolicy:
+    inputDigest: {}   # Use the digest provided by --images flag at release time
+
+deploy:
+  helm:
+    releases:
+    # API service
+    - name: boba-api
+      chartPath: deploy/charts/api-service
+      valuesFiles:
+      - deploy/charts/api-service/values.yaml
+      setValueTemplates:
+        image.tag: "{{.IMAGE_TAG_boba_api}}"
+        image.repository: "{{.IMAGE_REPO_boba_api}}"
+      namespace: boba
+      createNamespace: true
+    # Worker service
+    - name: boba-worker
+      chartPath: deploy/charts/worker-service
+      valuesFiles:
+      - deploy/charts/worker-service/values.yaml
+      setValueTemplates:
+        image.tag: "{{.IMAGE_TAG_boba_api}}"
+        image.repository: "{{.IMAGE_REPO_boba_api}}"
+      namespace: boba
+      createNamespace: true
+    # Platform ingress (TLS + BackendConfig)
+    - name: boba-ingress
+      chartPath: deploy/charts/platform-ingress
+      valuesFiles:
+      - deploy/charts/platform-ingress/values.yaml
+      namespace: boba
+      createNamespace: true
+
+# verify step — runs after each canary phase when verify:true is set.
+# Cloud Deploy invokes `skaffold verify` which executes these test containers.
+# The containers query Cloud Monitoring for the SLI metrics and exit non-zero
+# to signal failure (triggering the rollback Automation defined in clouddeploy.yaml).
+verify:
+- name: canary-health-check
+  container:
+    name: verify-canary
+    image: google/cloud-sdk:alpine
+    command:
+    - /bin/sh
+    args:
+    - /verify/check-canary-health.sh
+    env:
+    - name: GCP_PROJECT
+      value: "boba-prod-000000"
+    - name: SERVICE_NAME
+      value: "boba-api"
+    - name: ERROR_RATE_THRESHOLD
+      value: "0.01"   # 1%
+    - name: LATENCY_P95_THRESHOLD_MS
+      value: "2000"   # 2 seconds
+    - name: WINDOW_MINUTES
+      value: "10"
+
+profiles:
+# ── Staging ────────────────────────────────────────────────────────────────
+- name: staging
+  deploy:
+    helm:
+      releases:
+      - name: boba-api
+        chartPath: deploy/charts/api-service
+        valuesFiles:
+        - deploy/charts/api-service/values.yaml
+        - deploy/charts/api-service/values-staging.yaml
+        setValueTemplates:
+          image.tag: "{{.IMAGE_TAG_boba_api}}"
+          image.repository: "{{.IMAGE_REPO_boba_api}}"
+        namespace: boba
+        createNamespace: true
+      - name: boba-worker
+        chartPath: deploy/charts/worker-service
+        valuesFiles:
+        - deploy/charts/worker-service/values.yaml
+        - deploy/charts/worker-service/values-staging.yaml
+        setValueTemplates:
+          image.tag: "{{.IMAGE_TAG_boba_api}}"
+          image.repository: "{{.IMAGE_REPO_boba_api}}"
+        namespace: boba
+        createNamespace: true
+      - name: boba-ingress
+        chartPath: deploy/charts/platform-ingress
+        valuesFiles:
+        - deploy/charts/platform-ingress/values.yaml
+        - deploy/charts/platform-ingress/values-staging.yaml
+        namespace: boba
+        createNamespace: true
+
+# ── Production ─────────────────────────────────────────────────────────────
+- name: production
+  deploy:
+    helm:
+      releases:
+      - name: boba-api
+        chartPath: deploy/charts/api-service
+        valuesFiles:
+        - deploy/charts/api-service/values.yaml
+        - deploy/charts/api-service/values-prod.yaml
+        setValueTemplates:
+          image.tag: "{{.IMAGE_TAG_boba_api}}"
+          image.repository: "{{.IMAGE_REPO_boba_api}}"
+        namespace: boba
+        createNamespace: true
+      - name: boba-worker
+        chartPath: deploy/charts/worker-service
+        valuesFiles:
+        - deploy/charts/worker-service/values.yaml
+        - deploy/charts/worker-service/values-prod.yaml
+        setValueTemplates:
+          image.tag: "{{.IMAGE_TAG_boba_api}}"
+          image.repository: "{{.IMAGE_REPO_boba_api}}"
+        namespace: boba
+        createNamespace: true
+      - name: boba-ingress
+        chartPath: deploy/charts/platform-ingress
+        valuesFiles:
+        - deploy/charts/platform-ingress/values.yaml
+        - deploy/charts/platform-ingress/values-prod.yaml
+        namespace: boba
+        createNamespace: true

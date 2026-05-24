@@ -1,0 +1,114 @@
+# Cloud Deploy pipeline for BOBA — staging → production canary.
+#
+# Apply with:
+#   gcloud deploy apply --file=deploy/clouddeploy.yaml \
+#     --project=boba-prod-000000 --region=us-central1
+#
+# Resources defined here:
+#   DeliveryPipeline  boba-pipeline       — two-stage serial pipeline
+#   Target            boba-staging        — staging GKE cluster (no approval)
+#   Target            boba-production     — production GKE cluster (manual approval gate)
+#   Automation        boba-rollback-auto  — auto-rollback when canary verify fails
+#
+# Canary strategy (production stage only):
+#   Phase 1 — stable-10:   10% canary pods, verify job runs for 10 min
+#   Phase 2 — stable-50:   50% canary pods, verify job runs for 10 min
+#   Phase 3 — stable:      100% rollout (stable phase)
+#
+# Promotion from staging → production requires a manual approval
+# (requireApproval: true on the boba-production Target). The approver
+# uses the GCP Console or `gcloud deploy releases promote` to proceed.
+
+apiVersion: deploy.cloud.google.com/v1
+kind: DeliveryPipeline
+metadata:
+  name: boba-pipeline
+  labels:
+    app: boba
+    managed-by: cloud-deploy
+  annotations:
+    description: "BOBA production delivery pipeline – staging then canary production"
+serialPipeline:
+  stages:
+  # ── Stage 1: Staging ──────────────────────────────────────────────────────
+  - targetId: boba-staging
+    profiles:
+    - staging
+    strategy:
+      standard:
+        verify: false   # No canary in staging; full rollout with readiness gates
+  # ── Stage 2: Production (canary) ──────────────────────────────────────────
+  - targetId: boba-production
+    profiles:
+    - production
+    strategy:
+      canary:
+        # Kubernetes pod-based canary: Cloud Deploy manages a separate
+        # canary Deployment that handles the specified % of traffic.
+        runtimeConfig:
+          kubernetes:
+            serviceNetworking:
+              service: boba-api          # Kubernetes Service name
+              deployment: boba-api       # Kubernetes Deployment name (base name)
+              podSelectorLabel: app.kubernetes.io/instance
+        canaryDeployment:
+          percentages:
+          - 10    # Phase 1: canary-10  — 10 % of traffic routed to new version
+          - 50    # Phase 2: canary-50  — 50 % of traffic routed to new version
+          verify: true   # Run the skaffold verify step after each canary phase
+---
+# ── Staging target ────────────────────────────────────────────────────────────
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: boba-staging
+  labels:
+    env: staging
+requireApproval: false
+gke:
+  cluster: projects/boba-staging-000000/locations/us-central1/clusters/boba-staging
+---
+# ── Production target ─────────────────────────────────────────────────────────
+# requireApproval: true → the release is PAUSED after staging succeeds.
+# A human must explicitly approve via GCP Console, gcloud CLI, or Pub/Sub trigger.
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: boba-production
+  labels:
+    env: production
+requireApproval: true   # Manual approval gate (AC #4)
+gke:
+  cluster: projects/boba-prod-000000/locations/us-central1/clusters/boba-production
+---
+# ── Automation: auto-rollback on canary failure ────────────────────────────────
+# Monitors canary health-check results and rolls back to stable if any
+# canary phase verify step reports FAILED. Satisfies AC #5.
+apiVersion: deploy.cloud.google.com/v1
+kind: Automation
+metadata:
+  name: boba-rollback-auto
+  labels:
+    app: boba
+spec:
+  # Service account must have roles/clouddeploy.operator on the pipeline.
+  serviceAccount: boba-deploy-sa@boba-prod-000000.iam.gserviceaccount.com
+  selector:
+    targets:
+    - id: boba-production
+  suspended: false
+  rules:
+  - name: rollback-on-canary-verify-failure
+    # Trigger a rollback whenever a verify job fails during a canary rollout.
+    repairRolloutJob:
+      jobs:
+      - verify
+      repairCondition:
+        jobCondition:
+          targetedJobIds:
+          - canary-10-verify
+          - canary-50-verify
+      # Roll back to the previously deployed stable release.
+      repairPhases:
+      - rollback:
+          destinationPhase: stable
