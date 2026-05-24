@@ -1,0 +1,139 @@
+/* ==========================================================================
+   Campaign Planner — briefs, audience targeting, channel planning, email sequences
+   ========================================================================== */
+
+.page { padding: 1.5rem; max-width: 1280px; margin: 0 auto; }
+
+.pageHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+.pageTitle { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0; }
+.pageSubtitle { font-size: 0.875rem; color: #64748b; margin: 0.25rem 0 0; }
+
+.errorBanner { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 0.5rem; padding: 1rem 1.25rem; color: #991b1b; font-size: 0.875rem; margin-bottom: 1.5rem; }
+
+/* --------------------------------------------------------------------------
+   Generation form
+   -------------------------------------------------------------------------- */
+
+.campaignForm {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.formTitle { font-size: 0.875rem; font-weight: 600; color: #0f172a; margin: 0 0 1rem; }
+
+.formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; }
+@media (max-width: 640px) { .formGrid { grid-template-columns: 1fr; } }
+
+.formField { display: flex; flex-direction: column; gap: 0.25rem; }
+.formField.fullWidth { grid-column: 1 / -1; }
+
+.formLabel { font-size: 0.75rem; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.formInput, .formTextarea {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font-family: inherit;
+}
+.formInput:focus, .formTextarea:focus { outline: none; border-color: #6366f1; background: #ffffff; }
+.formTextarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+
+.channelCheckboxGroup { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.channelCheckbox { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.3125rem 0.625rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; cursor: pointer; font-size: 0.8125rem; color: #475569; background: #f8fafc; }
+.channelCheckbox:has(input:checked) { border-color: #6366f1; background: #ede9fe; color: #4f46e5; }
+.channelCheckbox input { width: 14px; height: 14px; accent-color: #6366f1; }
+
+.generateButton {
+  display: inline-flex; align-items: center; gap: 0.375rem;
+  padding: 0.625rem 1.25rem; font-size: 0.875rem; font-weight: 600;
+  color: #ffffff; background: #6366f1; border: none; border-radius: 0.375rem;
+  cursor: pointer; margin-top: 1rem;
+}
+.generateButton:hover:not(:disabled) { background: #4f46e5; }
+.generateButton:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* --------------------------------------------------------------------------
+   Campaign brief card
+   -------------------------------------------------------------------------- */
+
+.briefsList { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.briefCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.briefCardHeader {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; gap: 1rem; flex-wrap: wrap;
+}
+
+.briefName { font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0; }
+
+.briefMeta { font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem; }
+
+.briefChannelTags { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.briefChannelTag { padding: 0.1875rem 0.5rem; background: #ede9fe; color: #5b21b6; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500; }
+
+.briefBody { padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+
+.briefSection { display: flex; flex-direction: column; gap: 0.375rem; }
+.briefSectionLabel { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #94a3b8; margin: 0; }
+
+.briefSummary { font-size: 0.875rem; color: #475569; line-height: 1.6; margin: 0; }
+
+.bulletList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.bulletItem { font-size: 0.8125rem; color: #475569; display: flex; align-items: flex-start; gap: 0.375rem; line-height: 1.5; }
+.bulletItem::before { content: '•'; color: #94a3b8; flex-shrink: 0; margin-top: 0.1em; }
+
+/* --------------------------------------------------------------------------
+   Email sequences
+   -------------------------------------------------------------------------- */
+
+.emailSequence { border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow: hidden; }
+.emailSequenceName { padding: 0.5rem 0.75rem; background: #f8fafc; font-size: 0.8125rem; font-weight: 600; color: #334155; border-bottom: 1px solid #e2e8f0; }
+.emailStepList { display: flex; flex-direction: column; }
+.emailStep { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.625rem 0.75rem; border-bottom: 1px solid #f1f5f9; }
+.emailStep:last-child { border-bottom: none; }
+.emailStepDay { font-size: 0.6875rem; font-weight: 700; color: #6366f1; background: #ede9fe; padding: 0.125rem 0.375rem; border-radius: 0.25rem; white-space: nowrap; flex-shrink: 0; }
+.emailStepContent { flex: 1; min-width: 0; }
+.emailStepSubject { font-size: 0.8125rem; font-weight: 600; color: #0f172a; }
+.emailStepPreview { font-size: 0.75rem; color: #64748b; }
+
+/* --------------------------------------------------------------------------
+   Ad copy
+   -------------------------------------------------------------------------- */
+
+.adCopyGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 640px) { .adCopyGrid { grid-template-columns: 1fr; } }
+
+.adCopyCard { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.875rem; }
+.adCopyChannel { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #6366f1; margin-bottom: 0.375rem; }
+.adCopyHeadline { font-size: 0.875rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem; }
+.adCopyBody { font-size: 0.8125rem; color: #64748b; line-height: 1.5; margin-bottom: 0.375rem; }
+.adCopyCta { font-size: 0.75rem; font-weight: 600; color: #6366f1; }
+
+/* --------------------------------------------------------------------------
+   Content plan
+   -------------------------------------------------------------------------- */
+
+.contentPlanTable { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.contentPlanTable th { text-align: left; padding: 0.375rem 0.5rem; color: #475569; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e8f0; }
+.contentPlanTable td { padding: 0.5rem; color: #334155; border-bottom: 1px solid #f1f5f9; }
+.contentPlanTable tr:last-child td { border-bottom: none; }
+
+/* --------------------------------------------------------------------------
+   Loading
+   -------------------------------------------------------------------------- */
+
+.loadingState { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.75rem; padding: 3rem 1.5rem; color: #64748b; font-size: 0.875rem; }
+.loadingSpinner { font-size: 2rem; animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
