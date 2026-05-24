@@ -13,6 +13,7 @@ import type {
   GenerationParams,
   RefineParams,
   GeneratedContent,
+  ContentDraft,
   DraftsResult,
   DriveFolder,
   SaveToDriveParams,
@@ -37,9 +38,14 @@ export function refineContent(params: RefineParams): Promise<GeneratedContent> {
 
 /**
  * Fetch the list of previously generated content drafts for this workspace.
+ *
+ * The API returns a bare array; normalise into DraftsResult so `result.drafts`
+ * is always a defined array.
  */
-export function getDrafts(): Promise<DraftsResult> {
-  return api.get<DraftsResult>('/v1/content/drafts');
+export async function getDrafts(): Promise<DraftsResult> {
+  const data = await api.get<ContentDraft[] | DraftsResult | null>('/v1/content/drafts');
+  const drafts = Array.isArray(data) ? data : (data?.drafts ?? []);
+  return { drafts };
 }
 
 /**

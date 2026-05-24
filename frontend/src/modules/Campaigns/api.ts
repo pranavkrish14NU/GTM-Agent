@@ -19,7 +19,14 @@ export function generateCampaign(params: GenerateCampaignParams): Promise<Campai
 /**
  * Fetch all previously generated campaign briefs for the workspace.
  * Returns null when no campaigns have been generated yet.
+ *
+ * The API returns a bare array; normalise into CampaignsResult so
+ * `result.briefs` is always defined.
  */
-export function getCampaigns(): Promise<CampaignsResult | null> {
-  return api.get<CampaignsResult | null>('/v1/campaigns');
+export async function getCampaigns(): Promise<CampaignsResult | null> {
+  const data = await api.get<CampaignBrief[] | CampaignsResult | null>('/v1/campaigns');
+  if (data == null) return null;
+  const briefs = Array.isArray(data) ? data : (data.briefs ?? []);
+  const last_analyzed_at = Array.isArray(data) ? null : (data.last_analyzed_at ?? null);
+  return { briefs, last_analyzed_at };
 }

@@ -7,14 +7,21 @@
  */
 
 import { api } from '../../services/api.js';
-import type { CompetitorsResult, Battlecard } from './types.js';
+import type { Competitor, CompetitorsResult, Battlecard } from './types.js';
 
 /**
  * Fetch all identified competitors with threat scores and key differentiators.
  * Returns null when no analysis has been generated yet.
+ *
+ * The API returns a bare array; normalise into CompetitorsResult so
+ * `result.competitors` is always defined.
  */
-export function getCompetitors(): Promise<CompetitorsResult | null> {
-  return api.get<CompetitorsResult | null>('/v1/competitors');
+export async function getCompetitors(): Promise<CompetitorsResult | null> {
+  const data = await api.get<Competitor[] | CompetitorsResult | null>('/v1/competitors');
+  if (data == null) return null;
+  const competitors = Array.isArray(data) ? data : (data.competitors ?? []);
+  const last_analyzed_at = Array.isArray(data) ? null : (data.last_analyzed_at ?? null);
+  return { competitors, total: competitors.length, last_analyzed_at };
 }
 
 /**
