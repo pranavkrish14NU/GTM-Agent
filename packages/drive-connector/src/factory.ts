@@ -4,7 +4,7 @@
  * Reads the DRIVE_CONNECTOR environment variable to select the implementation:
  *
  *   DRIVE_CONNECTOR=mock   → MockDriveConnector (default for development/test)
- *   DRIVE_CONNECTOR=google → GoogleDriveConnector (production — WO-018)
+ *   DRIVE_CONNECTOR=google → GoogleDriveConnector (production)
  *
  * The factory is the single call site that knows about concrete implementations.
  * All other code in the system depends only on the DriveConnector interface.
@@ -12,6 +12,10 @@
 
 import type { DriveConnector } from './types.js';
 import { MockDriveConnector, type MockDriveConnectorOptions } from './mock/mock-connector.js';
+import {
+  GoogleDriveConnector,
+  type GoogleDriveConnectorOptions,
+} from './google/google-drive-connector.js';
 
 export type ConnectorType = 'mock' | 'google';
 
@@ -23,12 +27,18 @@ export interface CreateConnectorOptions {
   type?: ConnectorType;
   /** Options forwarded to MockDriveConnector when type === 'mock'. */
   mockOptions?: MockDriveConnectorOptions;
+  /**
+   * Options forwarded to GoogleDriveConnector when type === 'google'.
+   * accessToken is required for the real connector.
+   */
+  googleOptions?: GoogleDriveConnectorOptions;
 }
 
 /**
  * Creates and returns the appropriate DriveConnector implementation.
  *
  * @throws {Error} If DRIVE_CONNECTOR is set to an unrecognised value.
+ * @throws {Error} If type is 'google' but googleOptions.accessToken is missing.
  */
 export function createDriveConnector(options: CreateConnectorOptions = {}): DriveConnector {
   const connectorType: string =
@@ -38,14 +48,18 @@ export function createDriveConnector(options: CreateConnectorOptions = {}): Driv
     case 'mock':
       return new MockDriveConnector(options.mockOptions);
 
-    case 'google':
-      // GoogleDriveConnector will be implemented in WO-018.
-      // Importing lazily here so the factory does not fail at load time when
-      // the google implementation is not yet present.
-      throw new Error(
-        'GoogleDriveConnector is not yet implemented. ' +
-          'Set DRIVE_CONNECTOR=mock for development, or implement WO-018.',
-      );
+    case 'google': {
+      const googleOptions = options.googleOptions ?? {
+        accessToken: process.env['GOOGLE_ACCESS_TOKEN'] ?? '',
+      };
+      if (!googleOptions.accessToken) {
+        throw new Error(
+          'GoogleDriveConnector requires an accessToken. ' +
+            'Pass googleOptions.accessToken or set GOOGLE_ACCESS_TOKEN env var.',
+        );
+      }
+      return new GoogleDriveConnector(googleOptions);
+    }
 
     default:
       throw new Error(

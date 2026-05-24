@@ -120,6 +120,11 @@ export interface ListFilesOptions {
   pageToken?: string;
   /** Max files to return per page (default: 100). */
   pageSize?: number;
+  /**
+   * Incremental sync: only return files modified after this timestamp.
+   * Maps to Drive API `modifiedTime > '<iso>'` query clause.
+   */
+  modifiedAfter?: Date;
 }
 
 export interface SearchFilesOptions {
