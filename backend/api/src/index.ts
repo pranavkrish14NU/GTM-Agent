@@ -9,6 +9,9 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import pg from 'pg';
 import { LLMGatewayService, MockLLMProvider, InMemoryTokenBudgetStore } from '@boba/llm-gateway';
+import { securityHeaders } from './middleware/security-headers.middleware.js';
+import { csrfProtection } from './middleware/csrf.middleware.js';
+import { standardRateLimit } from './middleware/rate-limit.middleware.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createWorkspaceRouter } from './routes/workspaces.js';
 import { createDriveConnectionsRouter } from './routes/drive-connections.js';
@@ -54,9 +57,19 @@ const { Pool } = pg;
 export function createApp(pool: pg.Pool) {
   const app = express();
 
+  // Security headers on every response — must be first middleware.
+  app.use(securityHeaders());
+
+  // CSRF protection — double-submit cookie for cookie-reliant endpoints.
+  app.use(csrfProtection());
+
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
   app.use(cookieParser());
+
+  // Per-user rate limiting — 100 req/min on all /v1/* routes.
+  // LLM-powered routes apply an additional 10 req/min limit (see routes).
+  app.use('/v1', standardRateLimit());
 
   // Health check endpoint — no auth required.
   app.get('/health', (_req, res) => {

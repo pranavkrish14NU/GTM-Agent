@@ -112,7 +112,13 @@ describe('POST /v1/ask', () => {
       .send({});
 
     expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({ error: expect.stringContaining('query') });
+    // Validation middleware returns { error: 'Validation failed', details: [...] }.
+    // The details array contains the specific field error mentioning 'query'.
+    expect(res.body).toHaveProperty('error');
+    const details = (res.body.details as string[] | undefined) ?? [];
+    const hasQueryError =
+      details.some((d) => d.includes('query')) || String(res.body.error).includes('query');
+    expect(hasQueryError).toBe(true);
   });
 
   it('returns 400 when query is blank whitespace', async () => {

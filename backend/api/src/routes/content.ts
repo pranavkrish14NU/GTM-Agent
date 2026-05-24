@@ -39,6 +39,8 @@ import type { ContentService } from '../services/content.service.js';
 import type { ExportService } from '../services/export.service.js';
 import { createJwtMiddleware } from '../middleware/jwt.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
+import { llmRateLimit } from '../middleware/rate-limit.middleware.js';
+import { createBodyValidator, CONTENT_GENERATE_SCHEMA } from '../middleware/validate-body.middleware.js';
 
 export function createContentRouter(
   authService: AuthService,
@@ -120,17 +122,12 @@ export function createContentRouter(
     '/generate',
     jwtGuard,
     requireRole('member'),
+    llmRateLimit(),
+    createBodyValidator(CONTENT_GENERATE_SCHEMA),
     async (req: Request, res: Response): Promise<void> => {
       try {
         const { workspace_id, user_id } = req.user!;
         const request = req.body as import('../services/content.service.js').ContentGenerationRequest;
-
-        if (!request.type || !request.topic || !request.tone || !request.length || !request.channel) {
-          res.status(400).json({
-            error: 'Missing required fields: type, topic, tone, length, channel',
-          });
-          return;
-        }
 
         const draft = await contentService.generateContent(workspace_id, user_id, request);
         res.status(201).json(draft);
