@@ -1,0 +1,232 @@
+[
+  {
+    "id": "mock-file-001",
+    "name": "[MOCK] BOBA Brand Guide 2024.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-11-15T09:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-001/edit",
+    "parents": ["mock-folder-brand"],
+    "category": "brand",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-002",
+    "name": "[MOCK] Visual Identity and Logo Guidelines.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-10-20T14:30:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-002/edit",
+    "parents": ["mock-folder-brand"],
+    "category": "brand",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-003",
+    "name": "[MOCK] Voice and Tone Handbook Q4 2024.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-12-01T11:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-003/edit",
+    "parents": ["mock-folder-brand"],
+    "category": "brand",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-004",
+    "name": "[MOCK] Messaging Architecture and Value Proposition.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-11-28T16:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-004/edit",
+    "parents": ["mock-folder-brand"],
+    "category": "brand",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-005",
+    "name": "[MOCK] Competitor Battlecard — Salesforce CRM.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-12-10T10:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-005/edit",
+    "parents": ["mock-folder-competitive"],
+    "category": "competitive",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-006",
+    "name": "[MOCK] Competitor Battlecard — HubSpot Marketing Hub.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-12-08T10:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-006/edit",
+    "parents": ["mock-folder-competitive"],
+    "category": "competitive",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-007",
+    "name": "[MOCK] Competitor Battlecard — Gong Revenue Intelligence.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-12-05T10:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-007/edit",
+    "parents": ["mock-folder-competitive"],
+    "category": "competitive",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-008",
+    "name": "[MOCK] Competitive Landscape Analysis Q4 2024.gslides",
+    "mimeType": "application/vnd.google-apps.presentation",
+    "modifiedAt": "2024-12-12T09:00:00.000Z",
+    "webViewLink": "https://docs.google.com/presentation/d/mock-file-008/edit",
+    "parents": ["mock-folder-competitive"],
+    "category": "competitive",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-009",
+    "name": "[MOCK] Competitor Win-Loss Summary 2024.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-11-30T15:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-009/edit",
+    "parents": ["mock-folder-competitive"],
+    "category": "competitive",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-010",
+    "name": "[MOCK] Buyer Persona — Enterprise IT Director.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-10-15T11:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-010/edit",
+    "parents": ["mock-folder-personas"],
+    "category": "persona",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-011",
+    "name": "[MOCK] Buyer Persona — Chief Marketing Officer.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-10-15T11:30:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-011/edit",
+    "parents": ["mock-folder-personas"],
+    "category": "persona",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-012",
+    "name": "[MOCK] Buyer Persona — VP Sales Operations.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-10-16T09:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-012/edit",
+    "parents": ["mock-folder-personas"],
+    "category": "persona",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-013",
+    "name": "[MOCK] Buyer Persona — Revenue Operations Manager.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-10-17T10:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-013/edit",
+    "parents": ["mock-folder-personas"],
+    "category": "persona",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-014",
+    "name": "[MOCK] Q1 2025 Demand Generation Campaign Brief.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-12-15T14:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-014/edit",
+    "parents": ["mock-folder-campaigns"],
+    "category": "campaign",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-015",
+    "name": "[MOCK] Product Launch Campaign — AI Search Feature.gslides",
+    "mimeType": "application/vnd.google-apps.presentation",
+    "modifiedAt": "2024-12-01T09:00:00.000Z",
+    "webViewLink": "https://docs.google.com/presentation/d/mock-file-015/edit",
+    "parents": ["mock-folder-campaigns"],
+    "category": "campaign",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-016",
+    "name": "[MOCK] Enterprise Segment ABM Campaign Plan.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-11-20T13:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-016/edit",
+    "parents": ["mock-folder-campaigns"],
+    "category": "campaign",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-017",
+    "name": "[MOCK] Partner Co-Marketing Campaign Template.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-11-10T12:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-017/edit",
+    "parents": ["mock-folder-campaigns"],
+    "category": "campaign",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-018",
+    "name": "[MOCK] Win-Loss Analysis Q3 2024 — Enterprise Deals.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-10-31T16:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-018/edit",
+    "parents": ["mock-folder-winloss"],
+    "category": "win_loss",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-019",
+    "name": "[MOCK] Deal Review — Acme Corp $250K ARR Win.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-11-05T10:30:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-019/edit",
+    "parents": ["mock-folder-winloss"],
+    "category": "win_loss",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-020",
+    "name": "[MOCK] Deal Review — TechCorp Loss to Salesforce.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-11-08T11:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-020/edit",
+    "parents": ["mock-folder-winloss"],
+    "category": "win_loss",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-021",
+    "name": "[MOCK] Sales Enablement Playbook 2024.gdoc",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedAt": "2024-09-15T09:00:00.000Z",
+    "webViewLink": "https://docs.google.com/document/d/mock-file-021/edit",
+    "parents": ["mock-folder-sales"],
+    "category": "sales",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-022",
+    "name": "[MOCK] Pricing and Packaging Overview Q4 2024.gslides",
+    "mimeType": "application/vnd.google-apps.presentation",
+    "modifiedAt": "2024-11-25T14:00:00.000Z",
+    "webViewLink": "https://docs.google.com/presentation/d/mock-file-022/edit",
+    "parents": ["mock-folder-sales"],
+    "category": "sales",
+    "isMock": true
+  },
+  {
+    "id": "mock-file-023",
+    "name": "[MOCK] ICP Definition and Ideal Customer Scoring Model.gsheet",
+    "mimeType": "application/vnd.google-apps.spreadsheet",
+    "modifiedAt": "2024-10-01T10:00:00.000Z",
+    "webViewLink": "https://docs.google.com/spreadsheets/d/mock-file-023/edit",
+    "parents": ["mock-folder-brand"],
+    "category": "brand",
+    "isMock": true
+  }
+]
