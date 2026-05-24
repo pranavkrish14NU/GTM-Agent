@@ -17,6 +17,7 @@ import { createCitationsRouter } from './routes/citations.js';
 import { createAskRouter } from './routes/ask.js';
 import { createDashboardRouter } from './routes/dashboard.js';
 import { createBrandRouter } from './routes/brand.js';
+import { createPersonaRouter } from './routes/personas.js';
 import { AuthService } from './services/auth.service.js';
 import { DriveConnectionService } from './services/drive-connection.service.js';
 import { DocumentService } from './services/document.service.js';
@@ -24,6 +25,7 @@ import { CitationService } from './services/citation.service.js';
 import { AskService } from './services/ask.service.js';
 import { InsightService } from './services/insight.service.js';
 import { BrandService } from './services/brand.service.js';
+import { PersonaService } from './services/persona.service.js';
 import { CloudTasksQueue } from './tasks/task-queue.js';
 import { config } from './config.js';
 
@@ -80,6 +82,10 @@ export function createApp(pool: pg.Pool) {
   // Brand Intelligence routes — brand voice analysis, consistency scoring, drift detection.
   const brandService = new BrandService(pool);
   app.use('/v1/brand', createBrandRouter(authService, brandService));
+
+  // Persona Intelligence routes — B2B buyer persona cards and content gap analysis.
+  const personaService = new PersonaService(pool);
+  app.use('/v1/personas', createPersonaRouter(authService, personaService));
 
   // 404 handler.
   app.use((_req, res) => {
