@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { DrawerContextProvider, DrawerContext, useDrawer } from './DrawerContext.js';
 
 // Consumer component that exposes context values

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Drawer } from './Drawer.js';
 import { DrawerContext } from '../../context/DrawerContext.js';
 import type { DrawerContextValue } from '../../context/DrawerContext.js';

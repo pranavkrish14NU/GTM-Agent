@@ -87,20 +87,9 @@ describe('ErrorBoundary', () => {
   // -------------------------------------------------------------------------
   // Retry — reset error state
   // -------------------------------------------------------------------------
-  it('resets and shows children again after retry click', () => {
-    // Use a stateful wrapper so we can control whether child throws
-    // After retry the child no longer throws (simulating a transient error)
-    function RecoverableWrapper() {
-      // The key trick: after ErrorBoundary resets, BrokenChild renders with shouldThrow=false
-      return (
-        <ErrorBoundary>
-          <BrokenChild shouldThrow={false} />
-        </ErrorBoundary>
-      );
-    }
-
-    // Render a broken version first
-    const { rerender } = render(
+  it('resets error state after retry click (handleRetry calls setState)', () => {
+    // Render a broken child — ErrorBoundary catches and shows fallback
+    render(
       <ErrorBoundary>
         <BrokenChild shouldThrow />
       </ErrorBoundary>,
@@ -108,13 +97,13 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByTestId('error-boundary-fallback')).toBeInTheDocument();
 
-    // Click retry — this calls setState({ hasError: false })
+    // Click retry — calls setState({ hasError: false }); the broken child will
+    // throw again (same props), so ErrorBoundary re-catches it. We just verify
+    // the retry button is present, clickable, and triggers the reset path
+    // without an uncaught exception.
     fireEvent.click(screen.getByTestId('error-boundary-retry'));
 
-    // After reset, children should attempt to render; since same instance will
-    // throw again, we just verify the retry button handler fires setState.
-    // In real usage the parent would remount with healthy props.
-    // Here we verify no crash and the retry function is callable.
+    // console.error was called at least once (React + our componentDidCatch)
     expect(consoleErrorSpy).toHaveBeenCalled();
   });
 
