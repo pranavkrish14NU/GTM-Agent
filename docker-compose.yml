@@ -1,0 +1,51 @@
+##
+# BOBA — Local development stack
+#
+# Services:
+#   postgres  — PostgreSQL 16 + pgvector (main DB, port 5432)
+#   redis     — Redis 7 (cache, port 6379)
+#
+# Usage:
+#   docker compose up -d          # start all services
+#   docker compose down           # stop (data preserved in volumes)
+#   docker compose down -v        # stop + wipe all data
+##
+
+name: boba-dev
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: boba-postgres
+    environment:
+      POSTGRES_DB: boba
+      POSTGRES_USER: boba
+      POSTGRES_PASSWORD: boba_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boba -d boba"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: boba-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --save 60 1 --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:
