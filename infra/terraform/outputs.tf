@@ -77,3 +77,13 @@ output "redis_credentials_secret" {
   description = "Secret Manager secret ID holding Redis host/port/AUTH."
   value       = module.redis.credentials_secret_id
 }
+
+output "cloud_tasks_queues" {
+  description = "Cloud Tasks processing queue names."
+  value       = module.cloud_tasks.queue_names
+}
+
+output "cloud_tasks_dead_letter_queue" {
+  description = "Cloud Tasks dead-letter queue name."
+  value       = module.cloud_tasks.dead_letter_queue_name
+}

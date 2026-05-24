@@ -115,3 +115,19 @@ module "redis" {
   # Redis private service access requires the WO-001 service networking connection.
   depends_on = [module.project_services, module.networking, module.iam]
 }
+
+module "cloud_tasks" {
+  source = "./modules/cloud-tasks"
+
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+
+  # API gateway enqueues jobs; worker pods (Workload Identity) enqueue retries / DLQ.
+  enqueuer_members = [
+    "serviceAccount:${module.iam.api_gateway_sa_email}",
+    "serviceAccount:${module.iam.worker_pods_sa_email}",
+  ]
+
+  depends_on = [module.project_services, module.iam]
+}
