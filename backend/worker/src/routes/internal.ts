@@ -26,6 +26,9 @@ import { Router, type Request, type Response } from 'express';
 import type { FileProcessingService, FileProcessTaskPayload } from '../services/file-processing.service.js';
 import type { EmbeddingService, EmbedChunksTaskPayload } from '../services/embedding.service.js';
 import type { DriveSyncService, DriveSyncPayload } from '../services/drive-sync.service.js';
+import { createLogger } from '@boba/logger';
+
+const log = createLogger({ service: 'boba-worker' });
 
 export function createInternalRouter(
   fileProcessingService: FileProcessingService,
@@ -68,26 +71,24 @@ export function createInternalRouter(
 
       if (outcome.status === 'permanent_failure') {
         // Return 200 so Cloud Tasks stops retrying — failure is logged.
-        console.error(`[worker] Permanent failure for document ${documentId}: ${outcome.reason}`);
+        log.warn({ documentId, reason: outcome.reason }, 'file-process permanent failure');
         res.json({ status: 'permanent_failure', reason: outcome.reason });
         return;
       }
 
       if (outcome.status === 'skipped') {
-        console.log(`[worker] Skipped document ${documentId}: ${outcome.reason}`);
+        log.info({ documentId, reason: outcome.reason }, 'file-process skipped');
         res.json({ status: 'skipped', reason: outcome.reason });
         return;
       }
 
       // status === 'processed'
-      console.log(
-        `[worker] Processed document ${documentId}: ${outcome.chunksWritten} chunks written`,
-      );
+      log.info({ documentId, chunksWritten: outcome.chunksWritten }, 'file-process complete');
       res.json({ status: 'processed', chunksWritten: outcome.chunksWritten });
     } catch (err) {
       // Transient error — Cloud Tasks will retry.
       const message = err instanceof Error ? err.message : String(err);
-      console.error(`[worker] Transient error processing document ${documentId}: ${message}`);
+      log.error({ documentId, err: message }, 'file-process transient error');
       res.status(500).json({ error: message });
     }
   });
@@ -129,18 +130,16 @@ export function createInternalRouter(
       const outcome = await embeddingService.processEmbeddings(taskPayload);
 
       if (outcome.status === 'skipped') {
-        console.log(`[worker] Embed skipped for document ${documentId}: ${outcome.reason}`);
+        log.info({ documentId, reason: outcome.reason }, 'embed skipped');
         res.json({ status: 'skipped', reason: outcome.reason });
         return;
       }
 
-      console.log(
-        `[worker] Embedded ${outcome.chunksEmbedded} chunks for document ${documentId}`,
-      );
+      log.info({ documentId, chunksEmbedded: outcome.chunksEmbedded }, 'embed complete');
       res.json({ status: 'processed', chunksEmbedded: outcome.chunksEmbedded });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error(`[worker] Transient embedding error for document ${documentId}: ${message}`);
+      log.error({ documentId, err: message }, 'embed transient error');
       res.status(500).json({ error: message });
     }
   });
@@ -178,15 +177,19 @@ export function createInternalRouter(
 
     try {
       const result = await driveSyncService.sync(taskPayload);
-      console.log(
-        `[worker] Drive sync complete: ${result.documentsUpserted} docs, ` +
-          `${result.chunksWritten} chunks, ${result.chunksEmbedded} embedded, ` +
-          `${result.errors.length} errors`,
+      log.info(
+        {
+          documentsUpserted: result.documentsUpserted,
+          chunksWritten: result.chunksWritten,
+          chunksEmbedded: result.chunksEmbedded,
+          errors: result.errors.length,
+        },
+        'drive sync complete',
       );
       res.json({ status: 'processed', ...result });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error(`[worker] Drive sync failed: ${message}`);
+      log.error({ err: message }, 'drive sync failed');
       res.status(500).json({ error: message });
     }
   });

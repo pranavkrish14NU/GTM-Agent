@@ -21,8 +21,11 @@ import { EmbeddingService } from './services/embedding.service.js';
 import { DriveSyncService } from './services/drive-sync.service.js';
 import { createInternalRouter } from './routes/internal.js';
 import { config } from './config.js';
+import { createLogger } from '@boba/logger';
 
 const { Pool } = pg;
+
+const log = createLogger({ service: 'boba-worker' });
 
 // ---------------------------------------------------------------------------
 // App factory (exported for testing)
@@ -68,6 +71,6 @@ if (process.env['NODE_ENV'] !== 'test') {
   const app = createApp(pool, gateway);
 
   app.listen(config.port, () => {
-    console.log(`BOBA Worker listening on port ${config.port}`);
+    log.info({ port: config.port }, 'BOBA Worker listening');
   });
 }
