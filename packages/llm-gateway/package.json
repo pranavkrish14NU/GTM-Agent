@@ -1,0 +1,30 @@
+{
+  "name": "@boba/llm-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LLM provider abstraction with failover, token budget management, and semantic caching for BOBA.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --reporter=verbose",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ioredis": "^5.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
