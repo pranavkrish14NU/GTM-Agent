@@ -1,0 +1,34 @@
+{
+  "name": "@boba/worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BOBA Document Ingestion Worker — processes Drive files into text chunks.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "node --import tsx/esm src/index.ts",
+    "test": "vitest run --reporter=verbose",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@boba/database": "*",
+    "@boba/drive-connector": "*",
+    "express": "^4.21.2",
+    "pg": "^8.13.3",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.17.0",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/pg": "^8.11.10",
+    "@types/supertest": "^7.2.0",
+    "supertest": "^7.2.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
