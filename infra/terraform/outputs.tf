@@ -107,3 +107,13 @@ output "artifact_registry_url" {
   description = "Docker registry URL for pushing/pulling BOBA service images."
   value       = module.artifact_registry.registry_url
 }
+
+output "audit_log_bucket" {
+  description = "GCS bucket name receiving audit logs (90-day retention)."
+  value       = module.logging.audit_bucket_name
+}
+
+output "error_rate_metric" {
+  description = "Cloud Logging log-based metric name for error rate per service."
+  value       = module.logging.error_rate_metric_name
+}
